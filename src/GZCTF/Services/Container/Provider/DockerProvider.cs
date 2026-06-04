@@ -57,29 +57,16 @@ public class DockerProvider : IContainerProvider<DockerClient, DockerMetadata>
             PublicEntry = options.Value.PublicEntry
         };
 
-        // TODO: After Docker.DotNet.Enhanced 3.132.0 is adapted by testcontainers
-        //
-        // var builder = new DockerClientBuilder();
-        //
-        // if (!string.IsNullOrEmpty(_dockerMeta.Config.Uri))
-        //     builder = builder.WithEndpoint(new Uri(_dockerMeta.Config.Uri));
-        //
-        // if (!string.IsNullOrEmpty(_dockerMeta.Config.UserName) && !string.IsNullOrEmpty(_dockerMeta.Config.Password))
-        //     builder = builder.WithAuthProvider(new BasicAuthCredentials(_dockerMeta.Config.UserName,
-        //         _dockerMeta.Config.Password));
-        //
-        // _dockerClient = builder.Build();
+        var builder = new DockerClientBuilder();
 
-        Credentials? credentials = null;
+        if (!string.IsNullOrEmpty(_dockerMeta.Config.Uri))
+            builder = builder.WithEndpoint(new Uri(_dockerMeta.Config.Uri));
 
         if (!string.IsNullOrEmpty(_dockerMeta.Config.UserName) && !string.IsNullOrEmpty(_dockerMeta.Config.Password))
-            credentials = new BasicAuthCredentials(_dockerMeta.Config.UserName, _dockerMeta.Config.Password);
+            builder = builder.WithAuthProvider(new BasicAuthCredentials(_dockerMeta.Config.UserName,
+                _dockerMeta.Config.Password));
 
-        DockerClientConfiguration cfg = string.IsNullOrEmpty(_dockerMeta.Config.Uri)
-            ? new(credentials)
-            : new(new Uri(_dockerMeta.Config.Uri), credentials);
-
-        _dockerClient = cfg.CreateClient();
+        _dockerClient = builder.Build();
 
         var registries = registriesOptions.Value;
 
