@@ -60,9 +60,12 @@ jobs:
         run: |
           set -eu
           docker info >/dev/null
-          docker image inspect postgres:alpine >/dev/null 2>&1 || docker pull postgres:alpine
-          docker image inspect ghcr.io/gzctf/challenge-base/echo:latest >/dev/null 2>&1 || \
-            docker pull ghcr.io/gzctf/challenge-base/echo:latest
+          docker image inspect docker.io/library/busybox:latest >/dev/null 2>&1 || \
+            docker pull docker.io/library/busybox:latest
+          docker build \
+            --file src/GZCTF.Integration.Test/Assets/Echo/Dockerfile \
+            --tag gzctf-integration/echo:latest \
+            src/GZCTF.Integration.Test/Assets/Echo
 
       - name: 运行集成测试
         working-directory: src

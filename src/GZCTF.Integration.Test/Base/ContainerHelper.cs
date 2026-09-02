@@ -136,7 +136,7 @@ public static class ContainerHelper
 
     /// <summary>
     /// Fetch flag from container
-    /// NOTE: use `ghcr.io/gzctf/challenge-base/echo:latest`
+    /// 注意：使用基于 Docker Hub busybox 构建的 `gzctf-integration/echo:latest`
     /// </summary>
     /// <param name="entry">Container entry (GUID for proxy mode, IP:Port for direct mode)</param>
     /// <param name="server">TestServer for proxy mode (from factory.Server)</param>
@@ -215,8 +215,8 @@ public static class ContainerHelper
                 var result = await ws.ReceiveAsync(buffer, CancellationToken.None);
                 var flag = Encoding.UTF8.GetString(buffer, 0, result.Count).Trim();
 
-                await ws.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, CancellationToken.None);
-
+                // echo 容器发送 flag 后会关闭 TCP，此时代理可能已关闭 WebSocket；
+                // 测试客户端交由 using 释放即可。
                 Console.WriteLine($@"✅ Successfully retrieved flag via proxy: {flag}");
                 return flag;
             }
