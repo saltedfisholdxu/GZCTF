@@ -45,6 +45,12 @@ jobs:
       - name: 安装 pnpm
         run: npm install --global pnpm@11
 
+      - name: 安装集成测试运行库
+        run: |
+          set -eu
+          apt-get update
+          apt-get install --yes --no-install-recommends libpcap-dev
+
       - name: 还原并构建后端
         working-directory: src
         run: |

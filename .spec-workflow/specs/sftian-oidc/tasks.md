@@ -8,5 +8,7 @@
 - [x] 添加单元/集成测试，覆盖关联顺序、封禁、并发、重定向及 logout token。
 - [x] 增加 Gitea Actions、运维配置说明、迁移/回滚和 PR 说明。
 - [x] 完成本地编译、测试、格式与敏感信息检查。
+- [x] 升级存在高危漏洞的 .NET 与测试容器依赖，并完成 NuGet 漏洞扫描、完整测试、linux/amd64 发布和 Docker 镜像构建验证。
+- [x] 为 Gitea 集成测试作业安装 `libpcap-dev`，确保启用流量捕获的动态容器测试可运行。
 - [x] 提交并将同一 commit 推送到私有 Gitea 与 AGPL 公开 GitHub 仓库。
 - [ ] 备份并隔离验收后再执行生产 Keycloak 配置、用户迁移和部署。
