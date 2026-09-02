@@ -48,8 +48,16 @@ jobs:
       - name: 安装集成测试运行库
         run: |
           set -eu
-          apt-get update
-          apt-get install --yes --no-install-recommends libpcap-dev
+          if [ -f /etc/apt/sources.list.d/ubuntu.sources ]; then
+            sed -i 's|http://archive.ubuntu.com|https://archive.ubuntu.com|g; s|http://security.ubuntu.com|https://security.ubuntu.com|g' \
+              /etc/apt/sources.list.d/ubuntu.sources
+          fi
+          if [ -f /etc/apt/sources.list ]; then
+            sed -i 's|http://archive.ubuntu.com|https://archive.ubuntu.com|g; s|http://security.ubuntu.com|https://security.ubuntu.com|g' \
+              /etc/apt/sources.list
+          fi
+          apt-get -o Acquire::Retries=5 update
+          apt-get -o Acquire::Retries=5 install --yes --no-install-recommends libpcap-dev
 
       - name: 还原并构建后端
         working-directory: src
@@ -66,8 +74,17 @@ jobs:
         run: |
           set -eu
           docker info >/dev/null
-          docker image inspect docker.io/library/busybox:latest >/dev/null 2>&1 || \
-            docker pull docker.io/library/busybox:latest
+          if ! docker image inspect docker.io/library/busybox:latest >/dev/null 2>&1; then
+            for attempt in 1 2 3; do
+              if docker pull docker.io/library/busybox:latest; then
+                break
+              fi
+              if [ "$attempt" = 3 ]; then
+                exit 1
+              fi
+              sleep 10
+            done
+          fi
           docker build \
             --file src/GZCTF.Integration.Test/Assets/Echo/Dockerfile \
             --tag gzctf-integration/echo:latest \
@@ -103,8 +120,16 @@ jobs:
         run: |
           set -eu
           docker info >/dev/null
-          docker build --platform linux/amd64 --file src/GZCTF/Dockerfile \
-            --tag gzctf-ci:${GITHUB_SHA} src/GZCTF
+          for attempt in 1 2 3; do
+            if docker build --platform linux/amd64 --file src/GZCTF/Dockerfile \
+              --tag gzctf-ci:${GITHUB_SHA} src/GZCTF; then
+              break
+            fi
+            if [ "$attempt" = 3 ]; then
+              exit 1
+            fi
+            sleep 10
+          done
           docker image inspect gzctf-ci:${GITHUB_SHA} --format '镜像已构建: {{index .RepoTags 0}}'
 
   publish:
@@ -157,8 +182,16 @@ jobs:
           image="${IMAGE_REPOSITORY}:prod-${sha8}"
           printf '%s' "${ALIYUN_CR_PASSWORD}" | docker login registry.cn-hangzhou.aliyuncs.com \
             --username "${ALIYUN_CR_USERNAME}" --password-stdin
-          docker build --platform linux/amd64 --file src/GZCTF/Dockerfile \
-            --tag "${image}" src/GZCTF
+          for attempt in 1 2 3; do
+            if docker build --platform linux/amd64 --file src/GZCTF/Dockerfile \
+              --tag "${image}" src/GZCTF; then
+              break
+            fi
+            if [ "$attempt" = 3 ]; then
+              exit 1
+            fi
+            sleep 10
+          done
           docker push "${image}"
           echo "已发布 ${image}"
 
