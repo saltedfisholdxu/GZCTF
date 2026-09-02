@@ -45,14 +45,14 @@ GZCTF_ConnectionStrings__RedisCache
 
 - .NET 10.0.300 restore 成功；主项目本地 C# 编译为 0 警告、0 错误。
 - SSO 单元测试 25/25 通过；全量单元测试 178/178 通过。
-- Authentication 集成测试 9/9 通过，使用 Testcontainers 和本机已有的 `postgres:alpine`。
+- 全量集成测试 170/170 通过，使用 Testcontainers、本机已有的 `postgres:alpine` 和基于 Docker Hub `busybox:latest` 的 echo 测试镜像。
 - 本次全部 C# 文件通过限定范围的 `dotnet format --verify-no-changes`；官方基线 `DockerProvider.cs` 仍有 4 处既有空白格式告警，本 PR 未改该文件。
-- `pnpm check` 和 `pnpm build` 通过；沙箱内 GitHub contributors 与 Google Fonts 在线获取失败时使用已有资源继续完成构建。
+- `pnpm check` 和 `pnpm build` 通过；linux-x64 ReadyToRun publish 与 linux/amd64 Docker 镜像构建通过。
 - 11 种语言的 `account.json`、`admin.json` 均可解析且 key 集合一致；`git diff --check` 与敏感信息扫描通过。
 - OIDC logout token 测试覆盖可信签名、issuer、audience、`iat`、`jti`、`sid/sub`、`events`、nonce 禁止项和错误签名。
 
-本机没有注入 SixLabors 商业许可证，因此没有把规避许可证检查的设计时编译冒充 Release publish 或 Docker 验证。Gitea Actions 使用仓库 Secret `SIXLABORS_LICENSE` 完成正式 Release publish 与显式 `linux/amd64` Docker 构建。
+本地构建与 Gitea Actions 均只通过 `SixLaborsLicenseKey` 环境变量注入已授权许可证；许可证内容不进入 Git、命令输出或构建日志。Gitea 仓库 Secret 名称为 `SIXLABORS_LICENSE`。
 
-现有上游依赖在 restore/build 时报告：Testcontainers 引入的 `SSH.NET 2025.1.0` 对应 `GHSA-q939-rpr3-3284`；既有 DataProtection/NPOI 依赖链上的 `System.Security.Cryptography.Xml 10.0.9` 对应 `GHSA-23rf-6693-g89p`、`GHSA-8q5v-6pqq-x66h`、`GHSA-cvvh-rhrc-wg4q`、`GHSA-g8r8-53c2-pm3f`、`GHSA-mmjf-rqrv-855v`。本 PR 没有新增或升级这两项依赖，仍需单独跟随上游处理。
+依赖安全更新将 Microsoft ASP.NET Core / EF Core 补丁组升级到 `10.0.10`、`System.IdentityModel.Tokens.Jwt` 升级到 `8.19.2`、Testcontainers 升级到 `4.14.0`（传递依赖 `SSH.NET 2026.0.0`），修复 `System.Security.Cryptography.Xml 10.0.9` 的五个高危 GHSA 与 `SSH.NET 2025.1.0` 的 `GHSA-q939-rpr3-3284`。四个 .NET 项目的 NuGet 传递依赖漏洞扫描均未再发现当前已知漏洞。Gitea 验证作业安装 `libpcap-dev`，供启用流量捕获的动态容器集成测试使用。
 
 尚未完成：Gitea CI 实际运行、镜像发布、Pod Ready、生产备份/迁移以及真实 Keycloak 端到端登录。代码合并不代表这些状态。
