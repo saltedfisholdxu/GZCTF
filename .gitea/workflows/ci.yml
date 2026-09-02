@@ -122,15 +122,13 @@ jobs:
           docker info >/dev/null
           http_proxy_value="${HTTP_PROXY:-${http_proxy:-}}"
           https_proxy_value="${HTTPS_PROXY:-${https_proxy:-${http_proxy_value}}}"
-          no_proxy_value="${NO_PROXY:-${no_proxy:-}}"
           test -n "${https_proxy_value}"
           builder_name="gzctf-${GITHUB_RUN_ID}-verify"
           docker buildx create --name "${builder_name}" --driver docker-container \
             --driver-opt image=docker.io/moby/buildkit:buildx-stable-1 \
             --driver-opt network=host \
             --driver-opt "env.HTTP_PROXY=${http_proxy_value}" \
-            --driver-opt "env.HTTPS_PROXY=${https_proxy_value}" \
-            --driver-opt "env.NO_PROXY=${no_proxy_value}" --use
+            --driver-opt "env.HTTPS_PROXY=${https_proxy_value}" --use
           docker buildx inspect "${builder_name}" --bootstrap >/dev/null
           for attempt in 1 2 3; do
             if docker buildx build --builder "${builder_name}" --load \
@@ -197,15 +195,13 @@ jobs:
             --username "${ALIYUN_CR_USERNAME}" --password-stdin
           http_proxy_value="${HTTP_PROXY:-${http_proxy:-}}"
           https_proxy_value="${HTTPS_PROXY:-${https_proxy:-${http_proxy_value}}}"
-          no_proxy_value="${NO_PROXY:-${no_proxy:-}}"
           test -n "${https_proxy_value}"
           builder_name="gzctf-${GITHUB_RUN_ID}-publish"
           docker buildx create --name "${builder_name}" --driver docker-container \
             --driver-opt image=docker.io/moby/buildkit:buildx-stable-1 \
             --driver-opt network=host \
             --driver-opt "env.HTTP_PROXY=${http_proxy_value}" \
-            --driver-opt "env.HTTPS_PROXY=${https_proxy_value}" \
-            --driver-opt "env.NO_PROXY=${no_proxy_value}" --use
+            --driver-opt "env.HTTPS_PROXY=${https_proxy_value}" --use
           docker buildx inspect "${builder_name}" --bootstrap >/dev/null
           for attempt in 1 2 3; do
             if docker buildx build --builder "${builder_name}" --load \
