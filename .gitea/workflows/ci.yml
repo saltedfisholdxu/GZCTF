@@ -132,6 +132,10 @@ jobs:
           docker buildx inspect "${builder_name}" --bootstrap >/dev/null
           for attempt in 1 2 3; do
             if docker buildx build --builder "${builder_name}" --load \
+              --build-arg "HTTP_PROXY=${http_proxy_value}" \
+              --build-arg "HTTPS_PROXY=${https_proxy_value}" \
+              --build-arg "http_proxy=${http_proxy_value}" \
+              --build-arg "https_proxy=${https_proxy_value}" \
               --platform linux/amd64 --file src/GZCTF/Dockerfile \
               --tag gzctf-ci:${GITHUB_SHA} src/GZCTF; then
               break
@@ -205,6 +209,10 @@ jobs:
           docker buildx inspect "${builder_name}" --bootstrap >/dev/null
           for attempt in 1 2 3; do
             if docker buildx build --builder "${builder_name}" --load \
+              --build-arg "HTTP_PROXY=${http_proxy_value}" \
+              --build-arg "HTTPS_PROXY=${https_proxy_value}" \
+              --build-arg "http_proxy=${http_proxy_value}" \
+              --build-arg "https_proxy=${https_proxy_value}" \
               --platform linux/amd64 --file src/GZCTF/Dockerfile \
               --tag "${image}" src/GZCTF; then
               break
