@@ -56,6 +56,14 @@ jobs:
         working-directory: src
         run: dotnet test GZCTF.Test/GZCTF.Test.csproj --no-build --configuration Release
 
+      - name: 准备集成测试容器镜像
+        run: |
+          set -eu
+          docker info >/dev/null
+          docker image inspect postgres:alpine >/dev/null 2>&1 || docker pull postgres:alpine
+          docker image inspect ghcr.io/gzctf/challenge-base/echo:latest >/dev/null 2>&1 || \
+            docker pull ghcr.io/gzctf/challenge-base/echo:latest
+
       - name: 运行集成测试
         working-directory: src
         env:
