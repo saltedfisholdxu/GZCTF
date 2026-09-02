@@ -421,6 +421,28 @@
           "label": "Plattform-Slogan"
         },
         "title": "Plattform-Einstellungen"
+      },
+      "sso": {
+        "title": "SfTian Single Sign-On",
+        "enabled": {
+          "label": "SSO aktiviert",
+          "description": "Gibt an, ob Keycloak OIDC aktiviert ist"
+        },
+        "local_authentication": {
+          "label": "Lokale Passwortanmeldung",
+          "description": "Gibt an, ob die lokale Passwortanmeldung verfügbar bleibt"
+        },
+        "local_credentials": {
+          "label": "Lokale Zugangsdatenverwaltung",
+          "description": "Gibt an, ob Passwortwiederherstellung, Zurücksetzung und Änderung verfügbar bleiben"
+        },
+        "backchannel_logout": {
+          "label": "Back-Channel-Abmeldung",
+          "description": "Gibt an, ob die verteilte Sitzungswiderrufung verfügbar ist"
+        },
+        "authority": "OIDC Authority",
+        "client_id": "OIDC Client-ID",
+        "read_only": "Schreibgeschützte Bereitstellungskonfiguration. Client Secrets werden hier nie angezeigt."
       }
     },
     "show_all": "Alle anzeigen",

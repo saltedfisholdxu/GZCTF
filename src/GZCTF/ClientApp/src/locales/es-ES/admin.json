@@ -421,6 +421,28 @@
           "label": "Eslogan de la Plataforma"
         },
         "title": "Configuraciones de la Plataforma"
+      },
+      "sso": {
+        "title": "Inicio de sesión único SfTian",
+        "enabled": {
+          "label": "SSO habilitado",
+          "description": "Indica si Keycloak OIDC está habilitado"
+        },
+        "local_authentication": {
+          "label": "Inicio de sesión con contraseña local",
+          "description": "Indica si el inicio de sesión local sigue disponible"
+        },
+        "local_credentials": {
+          "label": "Gestión de credenciales locales",
+          "description": "Indica si la recuperación, el restablecimiento y el cambio de contraseña siguen disponibles"
+        },
+        "backchannel_logout": {
+          "label": "Cierre de sesión por canal posterior",
+          "description": "Indica si la revocación distribuida de sesiones está disponible"
+        },
+        "authority": "OIDC Authority",
+        "client_id": "ID de cliente OIDC",
+        "read_only": "Configuración de despliegue de solo lectura. Los secretos del cliente nunca se muestran aquí."
       }
     },
     "show_all": "Mostrar Todo",

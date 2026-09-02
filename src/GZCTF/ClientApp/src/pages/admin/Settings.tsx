@@ -30,6 +30,7 @@ import { webCryptoAvailable } from '@Utils/Crypto'
 import { getInputNumber, showErrorMsg } from '@Utils/Shared'
 import { IMAGE_MIME_TYPES } from '@Utils/Shared'
 import { OnceSWRConfig, useCaptchaConfig, useConfig } from '@Hooks/useConfig'
+import { useSso } from '@Hooks/useSso'
 import api, { AccountPolicy, ConfigEditModel, ContainerPolicy, GlobalConfig } from '@Api'
 import misc from '@Styles/Misc.module.css'
 
@@ -38,6 +39,7 @@ const Configs: FC = () => {
   const { mutate: mutateCaptchaConfig } = useCaptchaConfig()
 
   const { mutate: mutateConfig } = useConfig()
+  const { config: ssoConfig } = useSso()
   const [disabled, setDisabled] = useState(false)
   const [globalConfig, setGlobalConfig] = useState<GlobalConfig | null>()
   const [accountPolicy, setAccountPolicy] = useState<AccountPolicy | null>()
@@ -256,6 +258,65 @@ const Configs: FC = () => {
               />
             </Grid.Col>
           </Grid>
+        </Stack>
+        <Stack gap="sm">
+          <Title order={2}>{t('admin.content.settings.sso.title')}</Title>
+          <Divider />
+          <SimpleGrid cols={4}>
+            <Switch
+              checked={ssoConfig.enabled}
+              disabled
+              readOnly
+              label={SwitchLabel(
+                t('admin.content.settings.sso.enabled.label'),
+                t('admin.content.settings.sso.enabled.description')
+              )}
+            />
+            <Switch
+              checked={ssoConfig.localAuthenticationEnabled}
+              disabled
+              readOnly
+              label={SwitchLabel(
+                t('admin.content.settings.sso.local_authentication.label'),
+                t('admin.content.settings.sso.local_authentication.description')
+              )}
+            />
+            <Switch
+              checked={ssoConfig.localCredentialManagementEnabled}
+              disabled
+              readOnly
+              label={SwitchLabel(
+                t('admin.content.settings.sso.local_credentials.label'),
+                t('admin.content.settings.sso.local_credentials.description')
+              )}
+            />
+            <Switch
+              checked={ssoConfig.backchannelLogoutEnabled}
+              disabled
+              readOnly
+              label={SwitchLabel(
+                t('admin.content.settings.sso.backchannel_logout.label'),
+                t('admin.content.settings.sso.backchannel_logout.description')
+              )}
+            />
+          </SimpleGrid>
+          <SimpleGrid cols={2}>
+            <TextInput
+              readOnly
+              disabled
+              label={t('admin.content.settings.sso.authority')}
+              value={ssoConfig.authority ?? '-'}
+            />
+            <TextInput
+              readOnly
+              disabled
+              label={t('admin.content.settings.sso.client_id')}
+              value={ssoConfig.clientId ?? '-'}
+            />
+          </SimpleGrid>
+          <Text size="sm" c="dimmed">
+            {t('admin.content.settings.sso.read_only')}
+          </Text>
         </Stack>
         <Stack gap="sm">
           <Title order={2}>{t('admin.content.settings.account.title')}</Title>

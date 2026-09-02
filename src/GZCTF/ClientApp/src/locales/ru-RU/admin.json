@@ -421,6 +421,28 @@
           "label": "Слоган"
         },
         "title": "Настройки платформы"
+      },
+      "sso": {
+        "title": "Единый вход SfTian",
+        "enabled": {
+          "label": "SSO включен",
+          "description": "Показывает, включен ли Keycloak OIDC"
+        },
+        "local_authentication": {
+          "label": "Локальный вход по паролю",
+          "description": "Показывает, доступен ли локальный вход по паролю"
+        },
+        "local_credentials": {
+          "label": "Управление локальными учетными данными",
+          "description": "Показывает, доступны ли восстановление, сброс и изменение пароля"
+        },
+        "backchannel_logout": {
+          "label": "Back-channel выход",
+          "description": "Показывает, доступен ли распределенный отзыв сеансов"
+        },
+        "authority": "OIDC Authority",
+        "client_id": "ID клиента OIDC",
+        "read_only": "Конфигурация развертывания только для чтения. Client Secret здесь не отображается."
       }
     },
     "show_all": "Показать всё",

@@ -12,7 +12,8 @@
     "reset": "비밀번호 재설정",
     "save_profile": "프로필 저장",
     "update_email": "이메일 변경",
-    "verify_account": "계정 인증"
+    "verify_account": "계정 인증",
+    "sso_login": "SfTian 계정으로 로그인"
   },
   "content": {
     "confirm": {
@@ -34,7 +35,10 @@
       },
       "title": "이메일 인증"
     },
-    "welcome": "안녕, {{decodeEmail}}👋"
+    "welcome": "안녕, {{decodeEmail}}👋",
+    "sso": {
+      "local_login": "또는 로컬 계정으로 로그인"
+    }
   },
   "label": {
     "bio": "설명",
@@ -91,6 +95,10 @@
     "verify": {
       "failed": "계정 인증에 실패하였습니다",
       "success": "계정이 인증되었습니다. 로그인 해주세요."
+    },
+    "sso": {
+      "failed": "SfTian 로그인 실패",
+      "try_again": "SfTian 로그인을 다시 시도해 주세요"
     }
   },
   "password": {

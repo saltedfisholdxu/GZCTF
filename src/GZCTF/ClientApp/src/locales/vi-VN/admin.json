@@ -421,6 +421,28 @@
           "label": "Khẩu hiệu nền tảng."
         },
         "title": "Cài đặt nền tảng."
+      },
+      "sso": {
+        "title": "Đăng nhập một lần SfTian",
+        "enabled": {
+          "label": "Đã bật SSO",
+          "description": "Cho biết Keycloak OIDC có được bật hay không"
+        },
+        "local_authentication": {
+          "label": "Đăng nhập bằng mật khẩu cục bộ",
+          "description": "Cho biết đăng nhập cục bộ có còn khả dụng hay không"
+        },
+        "local_credentials": {
+          "label": "Quản lý thông tin xác thực cục bộ",
+          "description": "Cho biết khôi phục, đặt lại và đổi mật khẩu có còn khả dụng hay không"
+        },
+        "backchannel_logout": {
+          "label": "Đăng xuất back-channel",
+          "description": "Cho biết thu hồi phiên phân tán có khả dụng hay không"
+        },
+        "authority": "OIDC Authority",
+        "client_id": "ID máy khách OIDC",
+        "read_only": "Cấu hình triển khai chỉ đọc. Client Secret không bao giờ được hiển thị tại đây."
       }
     },
     "show_all": "Hiển thị tất cả.",
