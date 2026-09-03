@@ -14,4 +14,5 @@
 - [x] 增加最小权限部署/运行 RBAC、SSO 配置对象、镜像拉取 Secret 接入及完整 PodTemplate 滚动回滚流程。
 - [x] 删除 CI 中重复的 ACR/Kubernetes 预检，生产发布直接消费 `main` 已验证并推送的精确 SHA 镜像。
 - [x] 删除 CI 中重复的单元测试、集成测试、测试容器和前端检查，仅保留生产镜像构建发布与手工部署。
+- [ ] 修复 .NET 10 自动 PAR 与 Keycloak 26.7.3 `form_post` 回调缺失 state 的兼容问题，并完成生产复验。
 - [ ] 备份并隔离验收后再执行生产 Keycloak 配置、用户迁移和部署。

@@ -72,6 +72,10 @@ internal static class IdentityExtension
         options.SignedOutRedirectUri = "/";
         options.ResponseType = OpenIdConnectResponseType.Code;
         options.ResponseMode = OpenIdConnectResponseMode.FormPost;
+        // .NET 10 会在发现文档声明 PAR 端点时默认启用 PAR。当前 Keycloak 26.7.3
+        // 在生产链路中未将 PAR 请求里的 state 带回 form_post 回调，严格 state 校验会拒绝登录。
+        // 禁用 PAR 只改变授权参数的传递方式，不影响 Authorization Code、PKCE、nonce 或 state 校验。
+        options.PushedAuthorizationBehavior = PushedAuthorizationBehavior.Disable;
         options.UsePkce = true;
         options.SaveTokens = true;
         options.GetClaimsFromUserInfoEndpoint = true;

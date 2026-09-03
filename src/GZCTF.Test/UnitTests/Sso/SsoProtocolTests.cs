@@ -112,6 +112,7 @@ public class SsoProtocolTests
         Assert.Equal(SsoConstants.CallbackPath, options.CallbackPath);
         Assert.Equal(OpenIdConnectResponseType.Code, options.ResponseType);
         Assert.Equal(OpenIdConnectResponseMode.FormPost, options.ResponseMode);
+        Assert.Equal(PushedAuthorizationBehavior.Disable, options.PushedAuthorizationBehavior);
         Assert.True(options.UsePkce);
         Assert.True(options.SaveTokens);
         Assert.True(options.RequireHttpsMetadata);

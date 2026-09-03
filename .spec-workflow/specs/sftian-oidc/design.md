@@ -4,6 +4,8 @@
 
 浏览器访问 `/api/sso/login` 后由 `keycloak` 方案发起 Challenge。OIDC middleware 在 `/api/sso/callback` 校验 code、PKCE、state、nonce、issuer、audience 和签名，并把结果暂存于 `IdentityConstants.ExternalScheme`。`/api/sso/complete` 完成账号关联后，使用 `SignInManager` 签发 `GZCTF_Token`。
 
+.NET 10 在 Discovery 暴露 PAR 端点时默认使用 Pushed Authorization Request。生产 Keycloak 26.7.3 实测未将 PAR 请求中的 `state` 带回 `form_post` 回调，触发严格 state 校验拒绝登录，因此本客户端显式禁用 PAR，改由浏览器授权请求直接携带受保护的 state。Authorization Code、PKCE S256、nonce/state 校验和 `form_post` 回调均保持启用。
+
 应用 Cookie 只复制登出所需的 `id_token`，同时加入内部 `sftian:sub`、`sftian:sid`、`sftian:login_at` claims。access token、refresh token 和授权码不进入应用 Cookie或日志。
 
 ## 账号关联
