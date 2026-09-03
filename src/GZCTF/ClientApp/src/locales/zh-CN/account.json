@@ -13,7 +13,7 @@
     "save_profile": "保存个人信息",
     "update_email": "更改邮箱",
     "verify_account": "验证账户",
-    "sso_login": "使用 SfTian 账号登录"
+    "sso_login": "使用 Sf SSO 登录"
   },
   "content": {
     "confirm": {
@@ -37,6 +37,11 @@
     },
     "welcome": "{{decodeEmail}}, 你好👋",
     "sso": {
+      "existing_account": {
+        "description": "使用原账号和密码，无需重新注册；队伍、提交和成绩保持不变。",
+        "title": "原来已注册的账号可直接登录"
+      },
+      "identity_platform": "登录、注册与账号管理统一在 Sf SSO 统一身份平台完成。",
       "local_login": "或使用本地账号登录"
     }
   },
@@ -97,8 +102,8 @@
       "success": "账户已验证，请登录"
     },
     "sso": {
-      "failed": "SfTian 登录失败",
-      "try_again": "请重新尝试 SfTian 登录"
+      "failed": "Sf SSO 登录失败",
+      "try_again": "请重新尝试 Sf SSO 登录"
     }
   },
   "password": {

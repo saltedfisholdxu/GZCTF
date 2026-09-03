@@ -423,7 +423,7 @@
         "title": "Paramètres de la plateforme"
       },
       "sso": {
-        "title": "Authentification unique SfTian",
+        "title": "Authentification unique Sf SSO",
         "enabled": {
           "label": "SSO activé",
           "description": "Indique si Keycloak OIDC est activé"

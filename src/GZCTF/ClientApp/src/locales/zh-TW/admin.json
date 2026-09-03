@@ -423,7 +423,7 @@
         "title": "平臺設置"
       },
       "sso": {
-        "title": "SfTian 統一身分登入",
+        "title": "Sf SSO 統一身分登入",
         "enabled": {
           "label": "已啟用 SSO",
           "description": "是否已啟用 Keycloak OIDC 登入方案"

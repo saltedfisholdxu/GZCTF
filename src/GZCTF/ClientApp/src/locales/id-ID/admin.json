@@ -423,7 +423,7 @@
         "title": "Pengaturan platform"
       },
       "sso": {
-        "title": "Single Sign-On SfTian",
+        "title": "Single Sign-On Sf SSO",
         "enabled": {
           "label": "SSO diaktifkan",
           "description": "Menunjukkan apakah Keycloak OIDC diaktifkan"

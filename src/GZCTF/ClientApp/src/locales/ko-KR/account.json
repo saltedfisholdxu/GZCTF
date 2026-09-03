@@ -13,7 +13,7 @@
     "save_profile": "프로필 저장",
     "update_email": "이메일 변경",
     "verify_account": "계정 인증",
-    "sso_login": "SfTian 계정으로 로그인"
+    "sso_login": "Sf SSO로 로그인"
   },
   "content": {
     "confirm": {
@@ -37,6 +37,11 @@
     },
     "welcome": "안녕, {{decodeEmail}}👋",
     "sso": {
+      "existing_account": {
+        "description": "기존 계정과 비밀번호를 그대로 사용하세요. 다시 가입할 필요가 없으며 팀, 제출 기록, 성적은 그대로 유지됩니다.",
+        "title": "기존 가입 계정으로 바로 로그인할 수 있습니다"
+      },
+      "identity_platform": "로그인, 회원가입, 계정 관리는 Sf SSO 통합 인증 플랫폼에서 진행됩니다.",
       "local_login": "또는 로컬 계정으로 로그인"
     }
   },
@@ -97,8 +102,8 @@
       "success": "계정이 인증되었습니다. 로그인 해주세요."
     },
     "sso": {
-      "failed": "SfTian 로그인 실패",
-      "try_again": "SfTian 로그인을 다시 시도해 주세요"
+      "failed": "Sf SSO 로그인 실패",
+      "try_again": "Sf SSO 로그인을 다시 시도해 주세요"
     }
   },
   "password": {

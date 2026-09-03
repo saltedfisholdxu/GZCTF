@@ -423,7 +423,7 @@
         "title": "Настройки платформы"
       },
       "sso": {
-        "title": "Единый вход SfTian",
+        "title": "Единый вход Sf SSO",
         "enabled": {
           "label": "SSO включен",
           "description": "Показывает, включен ли Keycloak OIDC"

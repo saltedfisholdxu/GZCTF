@@ -13,7 +13,7 @@
     "save_profile": "Profil speichern",
     "update_email": "E-Mail ändern",
     "verify_account": "Konto verifizieren",
-    "sso_login": "Mit SfTian anmelden"
+    "sso_login": "Mit Sf SSO anmelden"
   },
   "content": {
     "confirm": {
@@ -37,6 +37,11 @@
     },
     "welcome": "Hallo, {{decodeEmail}}👋",
     "sso": {
+      "existing_account": {
+        "description": "Verwenden Sie Ihr bisheriges Konto und Passwort. Eine erneute Registrierung ist nicht erforderlich; Teams, Einreichungen und Ergebnisse bleiben unverändert.",
+        "title": "Bereits registrierte Konten können sich direkt anmelden"
+      },
+      "identity_platform": "Anmeldung, Registrierung und Kontoverwaltung erfolgen zentral über die Sf SSO Identitätsplattform.",
       "local_login": "Oder mit einem lokalen Konto anmelden"
     }
   },
@@ -97,8 +102,8 @@
       "success": "Das Konto wurde verifiziert, bitte einloggen"
     },
     "sso": {
-      "failed": "SfTian-Anmeldung fehlgeschlagen",
-      "try_again": "Bitte versuchen Sie die SfTian-Anmeldung erneut"
+      "failed": "Sf SSO-Anmeldung fehlgeschlagen",
+      "try_again": "Bitte versuchen Sie die Sf SSO-Anmeldung erneut"
     }
   },
   "password": {

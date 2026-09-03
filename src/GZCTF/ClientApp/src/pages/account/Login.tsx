@@ -1,7 +1,7 @@
-import { Anchor, Button, Divider, Grid, PasswordInput, TextInput } from '@mantine/core'
+import { Alert, Anchor, Button, Grid, Loader, PasswordInput, Text, TextInput } from '@mantine/core'
 import { useInputState } from '@mantine/hooks'
 import { showNotification, updateNotification } from '@mantine/notifications'
-import { mdiCheck, mdiClose } from '@mdi/js'
+import { mdiAccountCheckOutline, mdiCheck, mdiClose } from '@mdi/js'
 import { Icon } from '@mdi/react'
 import { FC, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -30,7 +30,7 @@ const Login: FC = () => {
   const { captchaRef, getToken, cleanUp } = useCaptchaRef()
   const { user, mutate } = useUser()
   const { config } = useConfig()
-  const { config: ssoConfig } = useSso()
+  const { config: ssoConfig, isLoading: isSsoLoading } = useSso()
 
   const { t } = useTranslation()
 
@@ -53,8 +53,7 @@ const Login: FC = () => {
     showNotification({
       color: 'red',
       title: t('account.notification.sso.failed'),
-      message:
-        error === 'banned' ? t('account.notification.login.banned') : t('account.notification.sso.try_again'),
+      message: error === 'banned' ? t('account.notification.login.banned') : t('account.notification.sso.try_again'),
       icon: <Icon path={mdiClose} size={1} />,
     })
   }, [params, t])
@@ -133,22 +132,30 @@ const Login: FC = () => {
   }
 
   return (
-    <AccountView onSubmit={onLogin}>
-      {ssoConfig.enabled && (
+    <AccountView onSubmit={!isSsoLoading && !ssoConfig.enabled ? onLogin : undefined}>
+      {isSsoLoading ? (
+        <Loader />
+      ) : ssoConfig.enabled ? (
         <>
-          <Button
-            fullWidth
-            type="button"
-            onClick={() => startSsoLogin(params.get('from') ?? '/')}
-          >
+          <Button fullWidth type="button" onClick={() => startSsoLogin(params.get('from') ?? '/')}>
             {t('account.button.sso_login')}
           </Button>
-          {ssoConfig.localAuthenticationEnabled && (
-            <Divider w="100%" label={t('account.content.sso.local_login')} labelPosition="center" />
-          )}
+          <Text c="dimmed" fz="xs" ta="center">
+            {t('account.content.sso.identity_platform')}
+          </Text>
+          <Alert
+            w="100%"
+            color="teal"
+            variant="light"
+            icon={<Icon path={mdiAccountCheckOutline} size={1.25} />}
+            title={<Text fw={800}>{t('account.content.sso.existing_account.title')}</Text>}
+          >
+            <Text fw={700} fz="sm">
+              {t('account.content.sso.existing_account.description')}
+            </Text>
+          </Alert>
         </>
-      )}
-      {ssoConfig.localAuthenticationEnabled && (
+      ) : (
         <>
           <TextInput
             required

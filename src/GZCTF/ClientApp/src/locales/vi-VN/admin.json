@@ -423,7 +423,7 @@
         "title": "Cài đặt nền tảng."
       },
       "sso": {
-        "title": "Đăng nhập một lần SfTian",
+        "title": "Đăng nhập một lần Sf SSO",
         "enabled": {
           "label": "Đã bật SSO",
           "description": "Cho biết Keycloak OIDC có được bật hay không"

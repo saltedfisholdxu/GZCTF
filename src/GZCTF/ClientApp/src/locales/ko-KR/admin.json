@@ -423,7 +423,7 @@
         "title": "플랫폼 설정"
       },
       "sso": {
-        "title": "SfTian 통합 로그인",
+        "title": "Sf SSO 통합 로그인",
         "enabled": {
           "label": "SSO 활성화",
           "description": "Keycloak OIDC 활성화 여부"

@@ -13,7 +13,7 @@
     "save_profile": "Lưu Hồ sơ",
     "update_email": "Thay đổi Email",
     "verify_account": "Xác minh Tài khoản",
-    "sso_login": "Đăng nhập bằng tài khoản SfTian"
+    "sso_login": "Đăng nhập bằng Sf SSO"
   },
   "content": {
     "confirm": {
@@ -37,6 +37,11 @@
     },
     "welcome": "Xin chào, {{decodeEmail}} 👋",
     "sso": {
+      "existing_account": {
+        "description": "Sử dụng tài khoản và mật khẩu cũ của bạn. Không cần đăng ký lại; đội, bài nộp và điểm số vẫn được giữ nguyên.",
+        "title": "Tài khoản đã đăng ký có thể đăng nhập trực tiếp"
+      },
+      "identity_platform": "Đăng nhập, đăng ký và quản lý tài khoản được thực hiện trên nền tảng danh tính Sf SSO.",
       "local_login": "Hoặc đăng nhập bằng tài khoản cục bộ"
     }
   },
@@ -97,8 +102,8 @@
       "success": "Đã xác minh tài khoản, vui lòng đăng nhập"
     },
     "sso": {
-      "failed": "Đăng nhập SfTian thất bại",
-      "try_again": "Vui lòng thử đăng nhập SfTian lại"
+      "failed": "Đăng nhập Sf SSO thất bại",
+      "try_again": "Vui lòng thử đăng nhập Sf SSO lại"
     }
   },
   "password": {
