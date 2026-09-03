@@ -7,6 +7,7 @@
 - 使用现有 `AspNetUserLogins` 绑定 `keycloak/sub`，无数据库 schema 变更、无 EF migration。
 - 增加前后通道登出、Garnet 会话撤销、本地认证策略开关和登录/管理员 UI。
 - 补齐 11 种语言资源、自动测试与 Gitea Actions。
+- 增加最小权限 Gitea deployer / GZCTF runtime RBAC、SSO ConfigMap/Secret 模板、ACR pull Secret 接入和带健康探针的单次滚动发布清单。
 
 ## Keycloak 运维配置
 
@@ -37,6 +38,7 @@ GZCTF_ConnectionStrings__RedisCache
 - 不修改 `AspNetUsers` 主键、PasswordHash 或业务关系；不新增 migration。
 - 现有 Rust migrator 固定使用 `--source gzctf`；迁移前必须完成两套 PostgreSQL 的备份、SHA-256 和隔离恢复演练。
 - `main` 构建 `registry.cn-hangzhou.aliyuncs.com/sf_project/gzctf:prod-<sha8>`；生产改拉内部 ACR 镜像。
+- 生产发布以一次 strategic merge patch 更新镜像和完整 PodTemplate；失败按旧 revision 执行 `kubectl rollout undo`，不是再次 `set image`。
 - AGPL 公开源码同步到 `https://github.com/saltedfisholdxu/GZCTF`，并与私有 Gitea/镜像使用相同 commit SHA。
 - 保留上游 `LICENSE`、`NOTICE`、`LICENSE_ADDENDUM.txt` 和受限组件标识，不对上游受限组件重新授权。
 - 跟随上游时需 rebase 到新的官方 tag，重新测试并构建镜像。
@@ -55,4 +57,6 @@ GZCTF_ConnectionStrings__RedisCache
 
 依赖安全更新将 Microsoft ASP.NET Core / EF Core 补丁组升级到 `10.0.10`、`System.IdentityModel.Tokens.Jwt` 升级到 `8.19.2`、Testcontainers 升级到 `4.14.0`（传递依赖 `SSH.NET 2026.0.0`），修复 `System.Security.Cryptography.Xml 10.0.9` 的五个高危 GHSA 与 `SSH.NET 2025.1.0` 的 `GHSA-q939-rpr3-3284`。四个 .NET 项目的 NuGet 传递依赖漏洞扫描均未再发现当前已知漏洞。Gitea 验证作业安装 `libpcap-dev`，供启用流量捕获的动态容器集成测试使用。
 
-尚未完成：Gitea CI 实际运行、镜像发布、Pod Ready、生产备份/迁移以及真实 Keycloak 端到端登录。代码合并不代表这些状态。
+Gitea 分支 Run 132/133 已通过后端、前端、ReadyToRun 与 linux/amd64 Docker 验证；Run 134 的 CodeQL 失败来自 GitHub 专用上传接口在 Gitea 返回 404，现已限制 CodeQL 只在 GitHub 执行。
+
+尚未完成：合并 `main`、发布生产镜像、候选 Deployment rollout、生产备份/迁移以及真实 Keycloak 端到端登录。代码分支验证不代表这些状态。

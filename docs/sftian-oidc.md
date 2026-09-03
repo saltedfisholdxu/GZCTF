@@ -37,7 +37,7 @@ GZCTF_AccountPolicy__AllowRegister
 GZCTF_ConnectionStrings__RedisCache
 ```
 
-生产非密钥值：
+最终切换时的生产非密钥值：
 
 ```text
 GZCTF_Sso__Enabled=true
@@ -48,6 +48,8 @@ GZCTF_Sso__LocalCredentialManagementEnabled=false
 GZCTF_AccountPolicy__AllowRegister=false
 GZCTF_ConnectionStrings__RedisCache=gzctf-garnet:6379
 ```
+
+发布准备阶段先应用 `deploy/kubernetes/gzctf-sso-config.yaml`，其中固定使用 `Sso.Enabled=false`、`LocalAuthenticationEnabled=true`、`LocalCredentialManagementEnabled=true`、`AllowRegister=true`。这一步只创建配置对象，不切换认证；维护窗口前不得提前套用上述最终切换值。
 
 `GZCTF_Sso__ClientSecret` 只从 Keycloak `Clients → gzctf → Credentials` 复制到独立 Kubernetes Secret。另在 `gzctf-server` 创建阿里云 ACR image pull Secret，并在 Deployment 的 `imagePullSecrets` 引用它。仓库 Actions Secret 名称为 `ALIYUN_CR_USERNAME`、`ALIYUN_CR_PASSWORD`、`KUBECONFIG` 和构建所需的 `SIXLABORS_LICENSE`。
 
@@ -76,7 +78,7 @@ Gitea Runner 已配置海外访问代理，CI 直接下载 Actions、NuGet、pnp
 
 ## 迁移门禁与步骤
 
-生产 ReviewCTF 使用 GZCTF 数据结构，迁移器固定使用 `--source gzctf`。当前基线数据为 4,654 个用户：4,445 个邮箱已确认，209 个邮箱未确认，规范化邮箱重复数为 0。
+生产 ReviewCTF 使用 GZCTF 数据结构，迁移器固定使用 `--source gzctf`。2026-09-03 发布前复核为 4,655 个用户：4,446 个邮箱已确认，209 个邮箱未确认，缺失邮箱、缺失密码哈希和规范化邮箱重复数均为 0。用户数据会继续变化，迁移窗口必须重新执行 preflight，不能把该快照当成最终计数。
 
 开始前必须分别对 GZCTF PostgreSQL 和 Keycloak PostgreSQL 执行 `pg_dump -Fc`，记录 SHA-256，并在隔离数据库实际恢复验证。备份文件不得进入仓库。
 
@@ -84,7 +86,7 @@ Gitea Runner 已配置海外访问代理，CI 直接下载 Actions、NuGet、pnp
 2. 部署候选 GZCTF，但保持 `GZCTF_Sso__Enabled=false`，在隔离环境完成 OIDC 验收。
 3. 维护窗口关闭本地注册、找回、重置和修改密码，冻结 GZCTF 密码哈希。
 4. 对生产执行 `preflight --source gzctf`；任何 source id、邮箱或用户名冲突都立即停止。
-5. 执行 `finalize --source gzctf` 和 `verify --source gzctf`，确认 4,654 个 source id 完整映射。
+5. 执行 `finalize --source gzctf` 和 `verify --source gzctf`，确认迁移窗口 preflight 得到的全部 source id 完整映射。
 6. 开启 SSO，暂时保留 `LocalAuthenticationEnabled=true`；不要长期运行 `watch`。
 7. 完成验收和 24 小时日志观察后，再关闭本地密码登录。
 

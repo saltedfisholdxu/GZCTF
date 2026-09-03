@@ -230,29 +230,60 @@ jobs:
     if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && inputs.deploy_production
     runs-on: k8s
     needs: publish
-    timeout-minutes: 10
+    timeout-minutes: 15
+    concurrency:
+      group: gzctf-production
+      cancel-in-progress: false
     steps:
-      - name: 更新镜像并等待 Ready
+      - name: 检出部署清单
+        uses: actions/checkout@v4
+
+      - name: 滚动发布并在失败时恢复完整 PodTemplate
         env:
           KUBECONFIG_DATA: ${{ secrets.KUBECONFIG }}
         run: |
           set -eu
           test -n "${KUBECONFIG_DATA:-}"
-          mkdir -p "$HOME/.kube"
-          printf '%s\n' "${KUBECONFIG_DATA}" > "$HOME/.kube/config"
-          chmod 600 "$HOME/.kube/config"
-          export KUBECONFIG="$HOME/.kube/config"
+          kube_tmp_dir="$(mktemp -d)"
+          test -n "${kube_tmp_dir}"
+          cleanup() {
+            test -n "${kube_tmp_dir:-}" && rm -rf -- "${kube_tmp_dir}"
+          }
+          trap cleanup EXIT
+          printf '%s\n' "${KUBECONFIG_DATA}" > "${kube_tmp_dir}/config"
+          chmod 600 "${kube_tmp_dir}/config"
+          export KUBECONFIG="${kube_tmp_dir}/config"
 
           sha8="$(printf '%s' "${GITHUB_SHA}" | cut -c 1-8)"
           next_image="${IMAGE_REPOSITORY}:prod-${sha8}"
+          patch_file="${kube_tmp_dir}/gzctf-deployment-patch.yaml"
+          sed "s|__GZCTF_IMAGE__|${next_image}|g" \
+            deploy/kubernetes/gzctf-deployment-patch.yaml > "${patch_file}"
+          grep -Fq "image: ${next_image}" "${patch_file}"
+
           previous_image="$(kubectl -n gzctf-server get deployment gzctf \
             -o jsonpath='{.spec.template.spec.containers[?(@.name=="gzctf")].image}')"
+          previous_revision="$(kubectl -n gzctf-server get deployment gzctf \
+            -o jsonpath='{.metadata.annotations.deployment\.kubernetes\.io/revision}')"
           test -n "${previous_image}"
+          test -n "${previous_revision}"
 
-          kubectl -n gzctf-server set image deployment/gzctf gzctf="${next_image}"
+          kubectl -n gzctf-server patch deployment gzctf \
+            --type=strategic --patch-file "${patch_file}"
           if ! kubectl -n gzctf-server rollout status deployment/gzctf --timeout=5m; then
-            echo "发布失败，恢复 ${previous_image}" >&2
-            kubectl -n gzctf-server set image deployment/gzctf gzctf="${previous_image}"
+            echo "发布失败，恢复 revision ${previous_revision}（${previous_image}）" >&2
+            kubectl -n gzctf-server rollout undo deployment/gzctf \
+              --to-revision="${previous_revision}"
+            kubectl -n gzctf-server rollout status deployment/gzctf --timeout=5m
+            exit 1
+          fi
+
+          actual_image="$(kubectl -n gzctf-server get deployment gzctf \
+            -o jsonpath='{.spec.template.spec.containers[?(@.name=="gzctf")].image}')"
+          if [ "${actual_image}" != "${next_image}" ]; then
+            echo "发布后镜像不一致：期望 ${next_image}，实际 ${actual_image}" >&2
+            kubectl -n gzctf-server rollout undo deployment/gzctf \
+              --to-revision="${previous_revision}"
             kubectl -n gzctf-server rollout status deployment/gzctf --timeout=5m
             exit 1
           fi

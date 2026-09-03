@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gzctf
+  namespace: gzctf-server
+spec:
+  minReadySeconds: 15
+  progressDeadlineSeconds: 600
+  revisionHistoryLimit: 5
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  template:
+    spec:
+      serviceAccountName: gzctf-runtime
+      imagePullSecrets:
+        - name: aliyun-cr
+      containers:
+        - name: gzctf
+          image: __GZCTF_IMAGE__
+          envFrom:
+            - configMapRef:
+                name: gzctf-sso-config
+            - secretRef:
+                name: gzctf-sso-secret
+          startupProbe:
+            httpGet:
+              path: /healthz
+              port: 3000
+              scheme: HTTP
+            periodSeconds: 5
+            timeoutSeconds: 4
+            failureThreshold: 60
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 3000
+              scheme: HTTP
+            periodSeconds: 5
+            timeoutSeconds: 4
+            failureThreshold: 3
+            successThreshold: 1
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 3000
+              scheme: HTTP
+            periodSeconds: 30
+            timeoutSeconds: 4
+            failureThreshold: 5
+            successThreshold: 1
