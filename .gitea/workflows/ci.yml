@@ -3,10 +3,14 @@ name: GZCTF 构建、测试与发布
 on:
   pull_request:
     branches: [main]
+    paths:
+      - "src/**"
   push:
     branches:
       - main
       - "codex/**"
+    paths:
+      - "src/**"
   workflow_dispatch:
     inputs:
       deploy_production:
@@ -24,6 +28,7 @@ env:
 jobs:
   verify:
     name: 后端、前端与镜像验证
+    if: github.event_name != 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 60
     env:
@@ -151,6 +156,37 @@ jobs:
           done
           docker image inspect gzctf-ci:${GITHUB_SHA} --format '镜像已构建: {{index .RepoTags 0}}'
 
+      - name: 发布 main 镜像到阿里云 ACR
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          ALIYUN_CR_USERNAME: ${{ secrets.ALIYUN_CR_USERNAME }}
+          ALIYUN_CR_PASSWORD: ${{ secrets.ALIYUN_CR_PASSWORD }}
+        run: |
+          set -euo pipefail
+          test -n "${ALIYUN_CR_USERNAME:-}"
+          test -n "${ALIYUN_CR_PASSWORD:-}"
+          docker_config_dir="$(mktemp -d /tmp/gzctf-docker-release.XXXXXX)"
+          case "${docker_config_dir}" in
+            /tmp/gzctf-docker-release.*) ;;
+            *) echo "非预期的 Docker 临时目录" >&2; exit 1 ;;
+          esac
+          cleanup() {
+            case "${docker_config_dir:-}" in
+              /tmp/gzctf-docker-release.*) rm -rf -- "${docker_config_dir}" ;;
+            esac
+          }
+          trap cleanup EXIT
+          umask 077
+          export DOCKER_CONFIG="${docker_config_dir}"
+          sha8="$(printf '%s' "${GITHUB_SHA}" | cut -c 1-8)"
+          image="${IMAGE_REPOSITORY}:prod-${sha8}"
+          printf '%s' "${ALIYUN_CR_PASSWORD}" | docker login registry.cn-hangzhou.aliyuncs.com \
+            --username "${ALIYUN_CR_USERNAME}" --password-stdin
+          docker image tag "gzctf-ci:${GITHUB_SHA}" "${image}"
+          docker push "${image}"
+          docker logout registry.cn-hangzhou.aliyuncs.com >/dev/null
+          echo "已发布 ${image}"
+
   registry-preflight:
     name: 发布前验证 ACR 凭据
     if: github.event_name == 'workflow_dispatch'
@@ -179,11 +215,17 @@ jobs:
           export DOCKER_CONFIG="${docker_config_dir}"
           printf '%s' "${ALIYUN_CR_PASSWORD}" | docker login registry.cn-hangzhou.aliyuncs.com \
             --username "${ALIYUN_CR_USERNAME}" --password-stdin
+          if [ "${GITHUB_REF}" = "refs/heads/main" ]; then
+            sha8="$(printf '%s' "${GITHUB_SHA}" | cut -c 1-8)"
+            image="${IMAGE_REPOSITORY}:prod-${sha8}"
+            docker manifest inspect "${image}" >/dev/null
+            echo "生产镜像已存在：${image}"
+          fi
           docker logout registry.cn-hangzhou.aliyuncs.com >/dev/null
 
   cluster-preflight:
     name: 发布前验证 Kubernetes 权限
-    if: github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch' && !inputs.deploy_production
     runs-on: k8s
     timeout-minutes: 5
     steps:
@@ -255,109 +297,12 @@ jobs:
           test -n "${deployment_state}"
           echo "Deployment 状态可读：${deployment_state}"
 
-  publish:
-    name: 发布 main 镜像
-    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
-    runs-on: ubuntu-latest
-    needs: verify
-    timeout-minutes: 45
-    env:
-      SixLaborsLicenseKey: ${{ secrets.SIXLABORS_LICENSE }}
-    steps:
-      - name: 检出代码
-        uses: actions/checkout@v4
-
-      - name: 安装 .NET SDK
-        uses: actions/setup-dotnet@v4
-        with:
-          global-json-file: src/global.json
-
-      - name: 安装 Node.js 与 pnpm
-        uses: actions/setup-node@v4
-        with:
-          node-version: 24
-
-      - name: 安装 pnpm
-        run: npm install --global pnpm@11
-
-      - name: 发布 linux/amd64 文件
-        working-directory: src
-        env:
-          VITE_APP_BUILD_TIMESTAMP: ${{ github.event.repository.updated_at }}
-          VITE_APP_GIT_SHA: ${{ github.sha }}
-          VITE_APP_GIT_NAME: ${{ github.ref_name }}
-        run: |
-          set -eu
-          dotnet restore
-          dotnet publish GZCTF/GZCTF.csproj --configuration Release \
-            --output GZCTF/publish/linux/amd64 --runtime linux-x64 \
-            --no-self-contained /p:PublishReadyToRun=true
-
-      - name: 构建并推送阿里云 ACR
-        env:
-          ALIYUN_CR_USERNAME: ${{ secrets.ALIYUN_CR_USERNAME }}
-          ALIYUN_CR_PASSWORD: ${{ secrets.ALIYUN_CR_PASSWORD }}
-        run: |
-          set -eu
-          test -n "${ALIYUN_CR_USERNAME:-}"
-          test -n "${ALIYUN_CR_PASSWORD:-}"
-          docker_config_dir="$(mktemp -d /tmp/gzctf-docker-publish.XXXXXX)"
-          case "${docker_config_dir}" in
-            /tmp/gzctf-docker-publish.*) ;;
-            *) echo "非预期的 Docker 临时目录" >&2; exit 1 ;;
-          esac
-          builder_name=""
-          cleanup() {
-            if [ -n "${builder_name:-}" ]; then
-              docker buildx rm --force "${builder_name}" >/dev/null 2>&1 || true
-            fi
-            case "${docker_config_dir:-}" in
-              /tmp/gzctf-docker-publish.*) rm -rf -- "${docker_config_dir}" ;;
-            esac
-          }
-          trap cleanup EXIT
-          umask 077
-          export DOCKER_CONFIG="${docker_config_dir}"
-          sha8="$(printf '%s' "${GITHUB_SHA}" | cut -c 1-8)"
-          image="${IMAGE_REPOSITORY}:prod-${sha8}"
-          printf '%s' "${ALIYUN_CR_PASSWORD}" | docker login registry.cn-hangzhou.aliyuncs.com \
-            --username "${ALIYUN_CR_USERNAME}" --password-stdin
-          http_proxy_value="${HTTP_PROXY:-${http_proxy:-}}"
-          https_proxy_value="${HTTPS_PROXY:-${https_proxy:-${http_proxy_value}}}"
-          test -n "${https_proxy_value}"
-          builder_name="gzctf-${GITHUB_RUN_ID}-publish"
-          docker buildx create --name "${builder_name}" --driver docker-container \
-            --driver-opt image=docker.io/moby/buildkit:buildx-stable-1 \
-            --driver-opt network=host \
-            --driver-opt "env.HTTP_PROXY=${http_proxy_value}" \
-            --driver-opt "env.HTTPS_PROXY=${https_proxy_value}" --use
-          docker buildx inspect "${builder_name}" --bootstrap >/dev/null
-          for attempt in 1 2 3; do
-            if docker buildx build --builder "${builder_name}" --load \
-              --build-arg "HTTP_PROXY=${http_proxy_value}" \
-              --build-arg "HTTPS_PROXY=${https_proxy_value}" \
-              --build-arg "http_proxy=${http_proxy_value}" \
-              --build-arg "https_proxy=${https_proxy_value}" \
-              --platform linux/amd64 --file src/GZCTF/Dockerfile \
-              --tag "${image}" src/GZCTF; then
-              break
-            fi
-            if [ "$attempt" = 3 ]; then
-              exit 1
-            fi
-            sleep 10
-          done
-          docker push "${image}"
-          echo "已发布 ${image}"
-
   deploy:
     name: 手动部署生产
     if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && inputs.deploy_production
     runs-on: k8s
     needs:
-      - publish
       - registry-preflight
-      - cluster-preflight
     timeout-minutes: 15
     concurrency:
       group: gzctf-production
