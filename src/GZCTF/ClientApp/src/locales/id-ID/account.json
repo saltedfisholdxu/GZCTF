@@ -12,7 +12,8 @@
     "reset": "Atur ulang Kata Sandi",
     "save_profile": "Simpan profil",
     "update_email": "Ubah email",
-    "verify_account": "Verifikasi akun"
+    "verify_account": "Verifikasi akun",
+    "sso_login": "Masuk dengan akun SfTian"
   },
   "content": {
     "confirm": {
@@ -34,7 +35,10 @@
       },
       "title": "Verifikasi Email"
     },
-    "welcome": "Halo, {{decodeEmail}}👋"
+    "welcome": "Halo, {{decodeEmail}}👋",
+    "sso": {
+      "local_login": "Atau masuk dengan akun lokal"
+    }
   },
   "label": {
     "bio": "Deskripsi",
@@ -91,6 +95,10 @@
     "verify": {
       "failed": "Gagal memverifikasi akun",
       "success": "Akun berhasil diverifikasi, harap login"
+    },
+    "sso": {
+      "failed": "Masuk SfTian gagal",
+      "try_again": "Silakan coba masuk dengan SfTian lagi"
     }
   },
   "password": {

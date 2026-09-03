@@ -421,6 +421,28 @@
           "label": "平臺標語"
         },
         "title": "平臺設置"
+      },
+      "sso": {
+        "title": "SfTian 統一身分登入",
+        "enabled": {
+          "label": "已啟用 SSO",
+          "description": "是否已啟用 Keycloak OIDC 登入方案"
+        },
+        "local_authentication": {
+          "label": "本機密碼登入",
+          "description": "是否繼續允許本機帳號密碼登入"
+        },
+        "local_credentials": {
+          "label": "本機憑證管理",
+          "description": "是否繼續允許找回、重設和修改本機密碼"
+        },
+        "backchannel_logout": {
+          "label": "後通道登出",
+          "description": "是否可使用分散式工作階段撤銷"
+        },
+        "authority": "OIDC Authority",
+        "client_id": "OIDC Client ID",
+        "read_only": "此處僅顯示部署唯讀設定，永不顯示 Client Secret。"
       }
     },
     "show_all": "顯示全部",

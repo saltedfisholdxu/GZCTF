@@ -421,6 +421,28 @@
           "label": "Slogan platform"
         },
         "title": "Pengaturan platform"
+      },
+      "sso": {
+        "title": "Single Sign-On SfTian",
+        "enabled": {
+          "label": "SSO diaktifkan",
+          "description": "Menunjukkan apakah Keycloak OIDC diaktifkan"
+        },
+        "local_authentication": {
+          "label": "Masuk dengan kata sandi lokal",
+          "description": "Menunjukkan apakah masuk lokal tetap tersedia"
+        },
+        "local_credentials": {
+          "label": "Pengelolaan kredensial lokal",
+          "description": "Menunjukkan apakah pemulihan, reset, dan perubahan kata sandi tetap tersedia"
+        },
+        "backchannel_logout": {
+          "label": "Keluar back-channel",
+          "description": "Menunjukkan apakah pencabutan sesi terdistribusi tersedia"
+        },
+        "authority": "OIDC Authority",
+        "client_id": "ID Klien OIDC",
+        "read_only": "Konfigurasi deployment hanya-baca. Client secret tidak pernah ditampilkan di sini."
       }
     },
     "show_all": "Tampilan semua",

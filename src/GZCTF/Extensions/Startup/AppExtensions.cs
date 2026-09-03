@@ -1,5 +1,6 @@
 using System.Reflection;
 using GZCTF.Hubs;
+using GZCTF.Middlewares;
 using Scalar.AspNetCore;
 using Serilog;
 
@@ -84,6 +85,7 @@ internal static class AppExtensions
                 app.UseRateLimiter();
 
             app.UseAuthentication();
+            app.UseMiddleware<SsoSessionMiddleware>();
             app.UseAuthorization();
 
             if (app.Environment.IsDevelopment() || app.Configuration.GetValue<bool>("RequestLogging"))

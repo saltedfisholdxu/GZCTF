@@ -12,7 +12,8 @@
     "reset": "Đặt lại Mật khẩu",
     "save_profile": "Lưu Hồ sơ",
     "update_email": "Thay đổi Email",
-    "verify_account": "Xác minh Tài khoản"
+    "verify_account": "Xác minh Tài khoản",
+    "sso_login": "Đăng nhập bằng tài khoản SfTian"
   },
   "content": {
     "confirm": {
@@ -34,7 +35,10 @@
       },
       "title": "Xác minh email"
     },
-    "welcome": "Xin chào, {{decodeEmail}} 👋"
+    "welcome": "Xin chào, {{decodeEmail}} 👋",
+    "sso": {
+      "local_login": "Hoặc đăng nhập bằng tài khoản cục bộ"
+    }
   },
   "label": {
     "bio": "Mô tả",
@@ -91,6 +95,10 @@
     "verify": {
       "failed": "Xác minh tài khoản thất bại",
       "success": "Đã xác minh tài khoản, vui lòng đăng nhập"
+    },
+    "sso": {
+      "failed": "Đăng nhập SfTian thất bại",
+      "try_again": "Vui lòng thử đăng nhập SfTian lại"
     }
   },
   "password": {

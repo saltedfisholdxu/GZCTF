@@ -12,7 +12,8 @@
     "reset": "重置密碼",
     "save_profile": "保存個人信息",
     "update_email": "更改郵箱",
-    "verify_account": "驗證帳戶"
+    "verify_account": "驗證帳戶",
+    "sso_login": "使用 SfTian 帳號登入"
   },
   "content": {
     "confirm": {
@@ -34,7 +35,10 @@
       },
       "title": "請驗證您的郵箱"
     },
-    "welcome": "{{decodeEmail}}, 你好👋"
+    "welcome": "{{decodeEmail}}, 你好👋",
+    "sso": {
+      "local_login": "或使用本機帳號登入"
+    }
   },
   "label": {
     "bio": "描述",
@@ -91,6 +95,10 @@
     "verify": {
       "failed": "帳戶驗證失敗",
       "success": "帳戶已驗證，請登錄"
+    },
+    "sso": {
+      "failed": "SfTian 登入失敗",
+      "try_again": "請重新嘗試 SfTian 登入"
     }
   },
   "password": {

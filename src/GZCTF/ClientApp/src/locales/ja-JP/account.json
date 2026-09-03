@@ -12,7 +12,8 @@
     "reset": "パスワードをリセット",
     "save_profile": "個人情報を保存",
     "update_email": "メールを変更",
-    "verify_account": "アカウントを認証"
+    "verify_account": "アカウントを認証",
+    "sso_login": "SfTian アカウントでログイン"
   },
   "content": {
     "confirm": {
@@ -34,7 +35,10 @@
       },
       "title": "メール確認"
     },
-    "welcome": "{{decodeEmail}}, こんにちは👋"
+    "welcome": "{{decodeEmail}}, こんにちは👋",
+    "sso": {
+      "local_login": "またはローカルアカウントでログイン"
+    }
   },
   "label": {
     "bio": "一言",
@@ -91,6 +95,10 @@
     "verify": {
       "failed": "アカウントを認証できませんでした",
       "success": "アカウント認証済みです。ログインしてください"
+    },
+    "sso": {
+      "failed": "SfTian ログインに失敗しました",
+      "try_again": "SfTian ログインをもう一度お試しください"
     }
   },
   "password": {

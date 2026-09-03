@@ -1,9 +1,9 @@
-import { Anchor, Button, Grid, PasswordInput, TextInput } from '@mantine/core'
+import { Anchor, Button, Divider, Grid, PasswordInput, TextInput } from '@mantine/core'
 import { useInputState } from '@mantine/hooks'
 import { showNotification, updateNotification } from '@mantine/notifications'
 import { mdiCheck, mdiClose } from '@mdi/js'
 import { Icon } from '@mdi/react'
-import { FC, useEffect, useState } from 'react'
+import { FC, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useSearchParams } from 'react-router'
 import { AccountView } from '@Components/AccountView'
@@ -12,6 +12,7 @@ import { encryptApiData } from '@Utils/Crypto'
 import { tryGetClientError } from '@Utils/Shared'
 import { useConfig } from '@Hooks/useConfig'
 import { usePageTitle } from '@Hooks/usePageTitle'
+import { startSsoLogin, useSso } from '@Hooks/useSso'
 import { useUser } from '@Hooks/useUser'
 import api from '@Api'
 import misc from '@Styles/Misc.module.css'
@@ -24,10 +25,12 @@ const Login: FC = () => {
   const [uname, setUname] = useInputState('')
   const [disabled, setDisabled] = useState(false)
   const [needRedirect, setNeedRedirect] = useState(false)
+  const reportedSsoError = useRef(false)
 
   const { captchaRef, getToken, cleanUp } = useCaptchaRef()
   const { user, mutate } = useUser()
   const { config } = useConfig()
+  const { config: ssoConfig } = useSso()
 
   const { t } = useTranslation()
 
@@ -41,6 +44,20 @@ const Login: FC = () => {
       }, 200)
     }
   }, [user, needRedirect])
+
+  useEffect(() => {
+    const error = params.get('ssoError')
+    if (!error || reportedSsoError.current) return
+
+    reportedSsoError.current = true
+    showNotification({
+      color: 'red',
+      title: t('account.notification.sso.failed'),
+      message:
+        error === 'banned' ? t('account.notification.login.banned') : t('account.notification.sso.try_again'),
+      icon: <Icon path={mdiClose} size={1} />,
+    })
+  }, [params, t])
 
   const onLogin = async (event: React.SyntheticEvent) => {
     event.preventDefault()
@@ -117,42 +134,64 @@ const Login: FC = () => {
 
   return (
     <AccountView onSubmit={onLogin}>
-      <TextInput
-        required
-        label={t('account.label.username_or_email')}
-        placeholder="ctfer"
-        type="text"
-        w="100%"
-        value={uname}
-        disabled={disabled}
-        onChange={(event) => setUname(event.currentTarget.value)}
-      />
-      <PasswordInput
-        required
-        label={t('account.label.password')}
-        id="your-password"
-        placeholder="P4ssW@rd"
-        w="100%"
-        value={pwd}
-        disabled={disabled}
-        onChange={(event) => setPwd(event.currentTarget.value)}
-      />
-      <Captcha action="login" ref={captchaRef} />
-      <Anchor fz="xs" className={misc.alignSelfEnd} component={Link} to="/account/recovery">
-        {t('account.anchor.recovery')}
-      </Anchor>
-      <Grid grow w="100%">
-        <Grid.Col span={2}>
-          <Button fullWidth variant="outline" component={Link} to="/account/register">
-            {t('account.button.register')}
+      {ssoConfig.enabled && (
+        <>
+          <Button
+            fullWidth
+            type="button"
+            onClick={() => startSsoLogin(params.get('from') ?? '/')}
+          >
+            {t('account.button.sso_login')}
           </Button>
-        </Grid.Col>
-        <Grid.Col span={2}>
-          <Button fullWidth disabled={disabled} onClick={onLogin}>
-            {t('account.button.login')}
-          </Button>
-        </Grid.Col>
-      </Grid>
+          {ssoConfig.localAuthenticationEnabled && (
+            <Divider w="100%" label={t('account.content.sso.local_login')} labelPosition="center" />
+          )}
+        </>
+      )}
+      {ssoConfig.localAuthenticationEnabled && (
+        <>
+          <TextInput
+            required
+            label={t('account.label.username_or_email')}
+            placeholder="ctfer"
+            type="text"
+            w="100%"
+            value={uname}
+            disabled={disabled}
+            onChange={(event) => setUname(event.currentTarget.value)}
+          />
+          <PasswordInput
+            required
+            label={t('account.label.password')}
+            id="your-password"
+            placeholder="P4ssW@rd"
+            w="100%"
+            value={pwd}
+            disabled={disabled}
+            onChange={(event) => setPwd(event.currentTarget.value)}
+          />
+          <Captcha action="login" ref={captchaRef} />
+          {ssoConfig.localCredentialManagementEnabled && (
+            <Anchor fz="xs" className={misc.alignSelfEnd} component={Link} to="/account/recovery">
+              {t('account.anchor.recovery')}
+            </Anchor>
+          )}
+          <Grid grow w="100%">
+            {ssoConfig.registrationEnabled && (
+              <Grid.Col span={2}>
+                <Button fullWidth variant="outline" component={Link} to="/account/register">
+                  {t('account.button.register')}
+                </Button>
+              </Grid.Col>
+            )}
+            <Grid.Col span={2}>
+              <Button fullWidth disabled={disabled} onClick={onLogin}>
+                {t('account.button.login')}
+              </Button>
+            </Grid.Col>
+          </Grid>
+        </>
+      )}
     </AccountView>
   )
 }

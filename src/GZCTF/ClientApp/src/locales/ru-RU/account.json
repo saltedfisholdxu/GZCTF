@@ -12,7 +12,8 @@
     "reset": "Сбросить пароль",
     "save_profile": "Сохранить",
     "update_email": "Изменить Email",
-    "verify_account": "Верификация"
+    "verify_account": "Верификация",
+    "sso_login": "Войти через SfTian"
   },
   "content": {
     "confirm": {
@@ -34,7 +35,10 @@
       },
       "title": "Подтверждение email"
     },
-    "welcome": "Здравствуйте, {{decodeEmail}}👋"
+    "welcome": "Здравствуйте, {{decodeEmail}}👋",
+    "sso": {
+      "local_login": "Или войти с локальной учетной записью"
+    }
   },
   "label": {
     "bio": "Описание",
@@ -91,6 +95,10 @@
     "verify": {
       "failed": "Не удалось верифицировать аккаунт",
       "success": "Аккаунт подтвержден, пожалуйста, войдите в аккаунт"
+    },
+    "sso": {
+      "failed": "Не удалось войти через SfTian",
+      "try_again": "Повторите попытку входа через SfTian"
     }
   },
   "password": {
