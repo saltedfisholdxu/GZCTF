@@ -84,8 +84,8 @@ internal static class IdentityExtension
         options.ClaimActions.MapUniqueJsonKey("gzctf_uid", "gzctf_uid");
         options.ClaimActions.MapUniqueJsonKey("sid", "sid");
         options.ProtocolValidator.RequireNonce = true;
-        options.ProtocolValidator.RequireState = true;
-        options.ProtocolValidator.RequireStateValidation = true;
+        // OIDC Handler 已先通过受保护的 state 和关联 Cookie 完成校验，随后会把消息中的 state
+        // 替换为可选的业务 userstate；此处不能再次启用协议验证器的 state 校验。
         options.ProtocolValidator.RequireSub = true;
         options.TokenValidationParameters.ValidateIssuer = true;
         options.TokenValidationParameters.ValidateAudience = true;

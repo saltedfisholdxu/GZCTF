@@ -112,6 +112,7 @@ public class SsoProtocolTests
         Assert.Equal(SsoConstants.CallbackPath, options.CallbackPath);
         Assert.Equal(OpenIdConnectResponseType.Code, options.ResponseType);
         Assert.Equal(OpenIdConnectResponseMode.FormPost, options.ResponseMode);
+        Assert.Equal(PushedAuthorizationBehavior.UseIfAvailable, options.PushedAuthorizationBehavior);
         Assert.True(options.UsePkce);
         Assert.True(options.SaveTokens);
         Assert.True(options.RequireHttpsMetadata);
@@ -119,8 +120,7 @@ public class SsoProtocolTests
         Assert.Equal([OpenIdConnectScope.OpenId, OpenIdConnectScope.Profile, OpenIdConnectScope.Email],
             options.Scope);
         Assert.True(options.ProtocolValidator.RequireNonce);
-        Assert.True(options.ProtocolValidator.RequireState);
-        Assert.True(options.ProtocolValidator.RequireStateValidation);
+        Assert.False(options.ProtocolValidator.RequireStateValidation);
         Assert.True(options.ProtocolValidator.RequireSub);
         Assert.True(options.TokenValidationParameters.ValidateIssuer);
         Assert.True(options.TokenValidationParameters.ValidateAudience);

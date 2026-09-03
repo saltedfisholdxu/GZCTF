@@ -212,6 +212,11 @@ public class AuthenticationTests(GZCTFApplicationFactory factory, ITestOutputHel
         var callbackResponse = await client.GetAsync("/api/sso/callback?error=access_denied");
         Assert.Equal(HttpStatusCode.Redirect, callbackResponse.StatusCode);
         Assert.Equal("/account/login?ssoError=remote_failure", callbackResponse.Headers.Location?.OriginalString);
+
+        var forgedStateResponse = await client.GetAsync("/api/sso/callback?code=fake&state=not-protected");
+        Assert.Equal(HttpStatusCode.Redirect, forgedStateResponse.StatusCode);
+        Assert.Equal("/account/login?ssoError=remote_failure",
+            forgedStateResponse.Headers.Location?.OriginalString);
     }
 
     [Fact]

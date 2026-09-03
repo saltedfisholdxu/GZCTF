@@ -4,6 +4,8 @@
 
 浏览器访问 `/api/sso/login` 后由 `keycloak` 方案发起 Challenge。OIDC middleware 在 `/api/sso/callback` 校验 code、PKCE、state、nonce、issuer、audience 和签名，并把结果暂存于 `IdentityConstants.ExternalScheme`。`/api/sso/complete` 完成账号关联后，使用 `SignInManager` 签发 `GZCTF_Token`。
 
+ASP.NET Core OIDC Handler 先用受保护的 state 与 correlation Cookie 完成 state 校验，随后会把协议消息中的 state 替换为可选的业务 `userstate`。因此保持 `OpenIdConnectOptions` 默认的 `ProtocolValidator.RequireStateValidation=false`，不得在协议验证器中重复启用 state 校验；伪造、缺失或无法解密的 state 仍会在 Handler 层被拒绝。
+
 应用 Cookie 只复制登出所需的 `id_token`，同时加入内部 `sftian:sub`、`sftian:sid`、`sftian:login_at` claims。access token、refresh token 和授权码不进入应用 Cookie或日志。
 
 ## 账号关联
