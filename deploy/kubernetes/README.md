@@ -50,7 +50,7 @@ kubectl auth can-i get secrets \
 - `KUBECONFIG`
 - `SIXLABORS_LICENSE`
 
-Secret 初次配置或变更后，可以在任意分支手工触发本工作流并保持 `deploy_production=false`。这是一次性环境预检，不编译、测试或构建镜像：它只在发布 Runner 上执行 ACR 登录/登出，并在预装 `kubectl` 和 `jq` 的 `k8s` Runner 上验证 kubeconfig 权限、对完整发布与恢复 patch 做 server-side dry-run；不会修改 Deployment。`deploy_production=true` 时不会重复这些 Kubernetes 预检，只校验 ACR 中精确 SHA 镜像存在后直接进入部署。
+ACR 凭据和 Kubernetes RBAC 只在初次配置或变更时由运维在本地验证，不在每次 CI 或生产发布中重复执行预检。
 
 ## 写入 OIDC Client Secret
 
@@ -72,7 +72,7 @@ rm -f "${secret_file}"
 
 ## 发布与回滚
 
-`main` 源码 push 只执行一次完整验证和 Docker 构建，验证成功后直接将同一本地镜像标记为 `prod-<sha8>` 并推送 ACR，不再另起 job 重复 restore/publish/build。生产发布只允许从 `main` 手工触发，直接消费该已验证镜像，再以一次 strategic merge patch 更新完整 PodTemplate；`maxUnavailable=0`、`maxSurge=1`，且 startup/readiness/liveness 都通过 `3000/healthz` 判定。
+测试只在合并前本地执行，不在 CI 重复运行。`main` 源码 push 只生成一次发布文件和 Docker 镜像，随后将该镜像标记为 `prod-<sha8>` 并推送 ACR。生产发布只允许从 `main` 手工触发并直接消费该镜像，再以一次 strategic merge patch 更新完整 PodTemplate；`maxUnavailable=0`、`maxSurge=1`，且 startup/readiness/liveness 都通过 `3000/healthz` 判定。
 
 发布失败、超时或实际镜像不一致时，CI 将上述发布前状态组成含 `$patch: replace` 的 strategic patch，恢复完整 PodTemplate 与策略。发布和恢复的 Ready 判定都只读取 `deployment/gzctf` 的 generation、replicas、updatedReplicas、readyReplicas、availableReplicas 和 unavailableReplicas，不使用 `rollout status/undo`。
 

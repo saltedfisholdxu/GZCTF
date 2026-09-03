@@ -37,9 +37,9 @@ GZCTF_ConnectionStrings__RedisCache
 
 - 不修改 `AspNetUsers` 主键、PasswordHash 或业务关系；不新增 migration。
 - 现有 Rust migrator 固定使用 `--source gzctf`；迁移前必须完成两套 PostgreSQL 的备份、SHA-256 和隔离恢复演练。
-- `main` 完整验证中的 linux/amd64 Docker 镜像会直接标记并推送为 `registry.cn-hangzhou.aliyuncs.com/sf_project/gzctf:prod-<sha8>`，不重复构建；生产改拉内部 ACR 镜像。
+- 测试在合并前本地完成，不在 CI 重复执行；`main` 只生成一次 linux/amd64 Docker 镜像并推送为 `registry.cn-hangzhou.aliyuncs.com/sf_project/gzctf:prod-<sha8>`，生产改拉内部 ACR 镜像。
 - 生产发布以一次 strategic merge patch 更新镜像和完整 PodTemplate；发布前保存完整旧 PodTemplate 与策略，失败时使用 `$patch: replace` 精确恢复，不是 `set image` 或 `rollout undo`。
-- `deploy_production=false` 是不编译、不构建、不修改 Deployment 的一次性 ACR/Kubernetes 环境预检；`deploy_production=true` 不重复 Kubernetes 预检，只校验 ACR 中 main 的精确 SHA 镜像存在后直接部署。deployer 仅能 `get/patch deployment/gzctf`，无需列举 namespace 内的 Deployment、ReplicaSet 或 Pod。
+- ACR 凭据和 Kubernetes RBAC 仅在配置变更时由运维本地验证，不在 CI 中重复预检；生产发布直接消费 `main` 已验证并推送的精确 SHA 镜像。deployer 仅能 `get/patch deployment/gzctf`，无需列举 namespace 内的 Deployment、ReplicaSet 或 Pod。
 - AGPL 公开源码同步到 `https://github.com/saltedfisholdxu/GZCTF`，并与私有 Gitea/镜像使用相同 commit SHA。
 - 保留上游 `LICENSE`、`NOTICE`、`LICENSE_ADDENDUM.txt` 和受限组件标识，不对上游受限组件重新授权。
 - 跟随上游时需 rebase 到新的官方 tag，重新测试并构建镜像。
