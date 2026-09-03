@@ -28,6 +28,7 @@ import { showErrorMsg, tryGetErrorMsg } from '@Utils/Shared'
 import { IMAGE_MIME_TYPES } from '@Utils/Shared'
 import { useIsMobile } from '@Utils/ThemeOverride'
 import { usePageTitle } from '@Hooks/usePageTitle'
+import { useSso } from '@Hooks/useSso'
 import { useUser } from '@Hooks/useUser'
 import api, { ProfileUpdateModel } from '@Api'
 import misc from '@Styles/Misc.module.css'
@@ -35,6 +36,7 @@ import misc from '@Styles/Misc.module.css'
 const Profile: FC = () => {
   const [dropzoneOpened, setDropzoneOpened] = useState(false)
   const { user, mutate } = useUser()
+  const { config: ssoConfig } = useSso()
 
   const [profile, setProfile] = useState<ProfileUpdateModel>({
     userName: user?.userName,
@@ -218,11 +220,13 @@ const Profile: FC = () => {
                 {t('account.button.update_email')}
               </Button>
             </Grid.Col>
-            <Grid.Col span={4}>
-              <Button fullWidth variant="outline" disabled={disabled} onClick={() => setPwdChangeOpened(true)}>
-                {t('account.button.change_password')}
-              </Button>
-            </Grid.Col>
+            {ssoConfig.localCredentialManagementEnabled && (
+              <Grid.Col span={4}>
+                <Button fullWidth variant="outline" disabled={disabled} onClick={() => setPwdChangeOpened(true)}>
+                  {t('account.button.change_password')}
+                </Button>
+              </Grid.Col>
+            )}
             <Grid.Col span={4}>
               <Button fullWidth disabled={disabled} onClick={onChangeProfile}>
                 {t('account.button.save_profile')}
@@ -248,11 +252,13 @@ const Profile: FC = () => {
         </Center>
       )}
 
-      <PasswordChangeModal
-        opened={pwdChangeOpened}
-        onClose={() => setPwdChangeOpened(false)}
-        title={t('account.button.change_password')}
-      />
+      {ssoConfig.localCredentialManagementEnabled && (
+        <PasswordChangeModal
+          opened={pwdChangeOpened}
+          onClose={() => setPwdChangeOpened(false)}
+          title={t('account.button.change_password')}
+        />
+      )}
 
       <Modal opened={mailEditOpened} onClose={() => setMailEditOpened(false)} title={t('account.button.update_email')}>
         <Stack>

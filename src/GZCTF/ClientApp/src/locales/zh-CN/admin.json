@@ -421,6 +421,28 @@
           "label": "平台标语"
         },
         "title": "平台设置"
+      },
+      "sso": {
+        "title": "SfTian 统一身份登录",
+        "enabled": {
+          "label": "已启用 SSO",
+          "description": "是否已启用 Keycloak OIDC 登录方案"
+        },
+        "local_authentication": {
+          "label": "本地密码登录",
+          "description": "是否继续允许本地账号密码登录"
+        },
+        "local_credentials": {
+          "label": "本地凭据管理",
+          "description": "是否继续允许找回、重置和修改本地密码"
+        },
+        "backchannel_logout": {
+          "label": "后通道登出",
+          "description": "是否可使用分布式会话撤销"
+        },
+        "authority": "OIDC Authority",
+        "client_id": "OIDC Client ID",
+        "read_only": "此处仅显示部署只读配置，永不显示 Client Secret。"
       }
     },
     "show_all": "显示全部",

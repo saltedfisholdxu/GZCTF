@@ -12,7 +12,8 @@
     "reset": "Passwort zurücksetzen",
     "save_profile": "Profil speichern",
     "update_email": "E-Mail ändern",
-    "verify_account": "Konto verifizieren"
+    "verify_account": "Konto verifizieren",
+    "sso_login": "Mit SfTian anmelden"
   },
   "content": {
     "confirm": {
@@ -34,7 +35,10 @@
       },
       "title": "E-Mail bestätigen"
     },
-    "welcome": "Hallo, {{decodeEmail}}👋"
+    "welcome": "Hallo, {{decodeEmail}}👋",
+    "sso": {
+      "local_login": "Oder mit einem lokalen Konto anmelden"
+    }
   },
   "label": {
     "bio": "Beschreibung",
@@ -91,6 +95,10 @@
     "verify": {
       "failed": "Fehler bei der Verifizierung des Kontos",
       "success": "Das Konto wurde verifiziert, bitte einloggen"
+    },
+    "sso": {
+      "failed": "SfTian-Anmeldung fehlgeschlagen",
+      "try_again": "Bitte versuchen Sie die SfTian-Anmeldung erneut"
     }
   },
   "password": {

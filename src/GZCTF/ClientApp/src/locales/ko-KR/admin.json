@@ -421,6 +421,28 @@
           "label": "플랫폼 슬로건"
         },
         "title": "플랫폼 설정"
+      },
+      "sso": {
+        "title": "SfTian 통합 로그인",
+        "enabled": {
+          "label": "SSO 활성화",
+          "description": "Keycloak OIDC 활성화 여부"
+        },
+        "local_authentication": {
+          "label": "로컬 비밀번호 로그인",
+          "description": "로컬 비밀번호 로그인을 계속 사용할 수 있는지 여부"
+        },
+        "local_credentials": {
+          "label": "로컬 자격 증명 관리",
+          "description": "비밀번호 찾기, 재설정 및 변경을 계속 사용할 수 있는지 여부"
+        },
+        "backchannel_logout": {
+          "label": "백채널 로그아웃",
+          "description": "분산 세션 해지를 사용할 수 있는지 여부"
+        },
+        "authority": "OIDC Authority",
+        "client_id": "OIDC 클라이언트 ID",
+        "read_only": "읽기 전용 배포 설정입니다. Client Secret은 표시되지 않습니다."
       }
     },
     "show_all": "모두 보기",

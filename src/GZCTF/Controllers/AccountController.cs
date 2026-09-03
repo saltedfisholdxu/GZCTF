@@ -27,6 +27,7 @@ public class AccountController(
     ICaptchaService captcha,
     IConfigService configService,
     IOptionsSnapshot<AccountPolicy> accountPolicy,
+    IOptionsSnapshot<SsoConfig> ssoConfig,
     IOptionsSnapshot<GlobalConfig> globalConfig,
     UserManager<UserInfo> userManager,
     SignInManager<UserInfo> signInManager,
@@ -50,7 +51,9 @@ public class AccountController(
     public async Task<IActionResult> Register([FromBody] RegisterModel model, CancellationToken token = default)
     {
         if (!accountPolicy.Value.AllowRegister)
-            return BadRequest(new RequestResponse(localizer[nameof(Resources.Program.Account_RegisterNotEnabled)]));
+            return ssoConfig.Value.Enabled
+                ? LocalAuthenticationForbidden()
+                : BadRequest(new RequestResponse(localizer[nameof(Resources.Program.Account_RegisterNotEnabled)]));
 
         if (accountPolicy.Value.UseCaptcha && !await captcha.VerifyAsync(model, HttpContext, token))
             return BadRequest(new RequestResponse(localizer[nameof(Resources.Program.Account_TokenValidationFailed)]));
@@ -153,6 +156,9 @@ public class AccountController(
     [ProducesResponseType(typeof(RequestResponse), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Recovery([FromBody] RecoveryModel model, CancellationToken token = default)
     {
+        if (LocalCredentialManagementDisabled)
+            return LocalAuthenticationForbidden();
+
         if (accountPolicy.Value.UseCaptcha && !await captcha.VerifyAsync(model, HttpContext, token))
             return BadRequest(new RequestResponse(localizer[nameof(Resources.Program.Account_TokenValidationFailed)]));
 
@@ -202,6 +208,9 @@ public class AccountController(
     [ProducesResponseType(typeof(RequestResponse), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> PasswordReset([FromBody] PasswordResetModel model)
     {
+        if (LocalCredentialManagementDisabled)
+            return LocalAuthenticationForbidden();
+
         var password = configService.DecryptApiData(model.Password);
         if (string.IsNullOrWhiteSpace(password))
             return BadRequest(new RequestResponse(localizer[nameof(Resources.Program.Model_PasswordRequired)]));
@@ -283,6 +292,9 @@ public class AccountController(
     [ProducesResponseType(typeof(RequestResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> LogIn([FromBody] LoginModel model, CancellationToken token = default)
     {
+        if (ssoConfig.Value.Enabled && !ssoConfig.Value.LocalAuthenticationEnabled)
+            return LocalAuthenticationForbidden();
+
         if (accountPolicy.Value.UseCaptcha && !await captcha.VerifyAsync(model, HttpContext, token))
             return BadRequest(new RequestResponse(localizer[nameof(Resources.Program.Account_TokenValidationFailed)]));
 
@@ -392,6 +404,9 @@ public class AccountController(
     [ProducesResponseType(typeof(RequestResponse), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> ChangePassword([FromBody] PasswordChangeModel model)
     {
+        if (LocalCredentialManagementDisabled)
+            return LocalAuthenticationForbidden();
+
         var user = await userManager.GetUserAsync(User);
 
         var oldPassword = configService.DecryptApiData(model.Old);
@@ -563,6 +578,14 @@ public class AccountController(
     private string GetEmailLink(string action, string token, string? email)
         => $"{HttpContext.Request.Scheme}://{HttpContext.Request.Host}/account/{action}?" +
            $"token={token}&email={Codec.Base64.Encode(email)}";
+
+    private bool LocalCredentialManagementDisabled =>
+        ssoConfig.Value.Enabled && !ssoConfig.Value.LocalCredentialManagementEnabled;
+
+    private ObjectResult LocalAuthenticationForbidden() =>
+        StatusCode(StatusCodes.Status403Forbidden,
+            new RequestResponse(localizer[nameof(Resources.Program.Auth_AccessForbidden)],
+                StatusCodes.Status403Forbidden));
 
     private BadRequestObjectResult HandleIdentityError(IEnumerable<IdentityError> errors) =>
         BadRequest(new RequestResponse(errors.FirstOrDefault()?.Description ??

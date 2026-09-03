@@ -12,7 +12,8 @@
     "reset": "Reset Password",
     "save_profile": "Save Profile",
     "update_email": "Change Email",
-    "verify_account": "Verify Account"
+    "verify_account": "Verify Account",
+    "sso_login": "Sign in with SfTian"
   },
   "content": {
     "confirm": {
@@ -34,7 +35,10 @@
       },
       "title": "Verify Email"
     },
-    "welcome": "Hello, {{decodeEmail}}👋"
+    "welcome": "Hello, {{decodeEmail}}👋",
+    "sso": {
+      "local_login": "Or sign in with a local account"
+    }
   },
   "label": {
     "bio": "Description",
@@ -91,6 +95,10 @@
     "verify": {
       "failed": "Failed to verify the account",
       "success": "Account has been verified, please login"
+    },
+    "sso": {
+      "failed": "SfTian sign-in failed",
+      "try_again": "Please try SfTian sign-in again"
     }
   },
   "password": {

@@ -421,6 +421,28 @@
           "label": "スローガン"
         },
         "title": "プラットフォーム設定"
+      },
+      "sso": {
+        "title": "SfTian シングルサインオン",
+        "enabled": {
+          "label": "SSO 有効",
+          "description": "Keycloak OIDC が有効かどうか"
+        },
+        "local_authentication": {
+          "label": "ローカルパスワードログイン",
+          "description": "ローカルパスワードログインを引き続き利用できるかどうか"
+        },
+        "local_credentials": {
+          "label": "ローカル認証情報管理",
+          "description": "パスワードの回復、リセット、変更を引き続き利用できるかどうか"
+        },
+        "backchannel_logout": {
+          "label": "バックチャネルログアウト",
+          "description": "分散セッション失効を利用できるかどうか"
+        },
+        "authority": "OIDC Authority",
+        "client_id": "OIDC クライアント ID",
+        "read_only": "読み取り専用のデプロイ設定です。Client Secret は表示されません。"
       }
     },
     "show_all": "すべてを表示",

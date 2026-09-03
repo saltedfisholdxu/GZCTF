@@ -421,6 +421,28 @@
           "label": "Slogan de la plateforme"
         },
         "title": "Paramètres de la plateforme"
+      },
+      "sso": {
+        "title": "Authentification unique SfTian",
+        "enabled": {
+          "label": "SSO activé",
+          "description": "Indique si Keycloak OIDC est activé"
+        },
+        "local_authentication": {
+          "label": "Connexion par mot de passe local",
+          "description": "Indique si la connexion locale reste disponible"
+        },
+        "local_credentials": {
+          "label": "Gestion des identifiants locaux",
+          "description": "Indique si la récupération, la réinitialisation et la modification du mot de passe restent disponibles"
+        },
+        "backchannel_logout": {
+          "label": "Déconnexion back-channel",
+          "description": "Indique si la révocation distribuée des sessions est disponible"
+        },
+        "authority": "OIDC Authority",
+        "client_id": "ID client OIDC",
+        "read_only": "Configuration de déploiement en lecture seule. Les secrets client ne sont jamais affichés ici."
       }
     },
     "show_all": "Afficher tout",

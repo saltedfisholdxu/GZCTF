@@ -5,10 +5,12 @@ import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router'
 import { useSWRConfig } from 'swr'
 import api from '@Api'
+import { submitSsoLogout, useSso } from './useSso'
 
 export const useUser = () => {
   const navigate = useNavigate()
   const { t } = useTranslation()
+  const { config: ssoConfig } = useSso()
 
   const {
     data: user,
@@ -20,6 +22,10 @@ export const useUser = () => {
     revalidateOnFocus: false,
     onErrorRetry: async (err, _key, _config, revalidate, { retryCount }) => {
       if (err?.status === 403) {
+        if (ssoConfig.enabled) {
+          submitSsoLogout()
+          return
+        }
         await api.account.accountLogOut()
         navigate('/')
         showNotification({
@@ -66,8 +72,18 @@ export const useLogOut = () => {
   const { mutate } = useSWRConfig()
   const { mutate: mutateProfile } = useUser()
   const { t } = useTranslation()
+  const { config: ssoConfig } = useSso()
 
   return async () => {
+    if (ssoConfig.enabled) {
+      mutate((key) => typeof key === 'string' && key.includes('game/'), undefined, {
+        revalidate: false,
+      })
+      mutateProfile(undefined, { revalidate: false })
+      submitSsoLogout()
+      return
+    }
+
     try {
       await api.account.accountLogOut()
       navigate('/')
