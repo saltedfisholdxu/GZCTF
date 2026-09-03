@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - "src/**"
+      - ".gitea/workflows/ci.yml"
   workflow_dispatch:
     inputs:
       deploy_production:
@@ -123,17 +124,15 @@ jobs:
           echo "已发布 ${image}"
 
   deploy:
-    name: 手动部署生产
-    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && inputs.deploy_production
+    name: 部署生产
+    needs: publish
+    if: always() && github.ref == 'refs/heads/main' && ((github.event_name == 'push' && needs.publish.result == 'success') || (github.event_name == 'workflow_dispatch' && inputs.deploy_production))
     runs-on: k8s
     timeout-minutes: 15
     concurrency:
       group: gzctf-production
       cancel-in-progress: false
     steps:
-      - name: 检出部署清单
-        uses: actions/checkout@v4
-
       - name: 滚动发布并在失败时恢复完整 PodTemplate
         shell: bash
         env:
@@ -160,10 +159,22 @@ jobs:
 
           sha8="$(printf '%s' "${GITHUB_SHA}" | cut -c 1-8)"
           next_image="${IMAGE_REPOSITORY}:prod-${sha8}"
-          patch_file="${kube_tmp_dir}/gzctf-deployment-patch.yaml"
-          sed "s|__GZCTF_IMAGE__|${next_image}|g" \
-            deploy/kubernetes/gzctf-deployment-patch.yaml > "${patch_file}"
-          grep -Fq "image: ${next_image}" "${patch_file}"
+          deployment_patch="$(jq -nc --arg image "${next_image}" '
+            {
+              spec: {
+                template: {
+                  spec: {
+                    containers: [
+                      {
+                        name: "gzctf",
+                        image: $image
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          ')"
 
           deployment_snapshot="${kube_tmp_dir}/gzctf-deployment-before.json"
           kubectl -n gzctf-server get deployment gzctf -o json > "${deployment_snapshot}"
@@ -254,7 +265,7 @@ jobs:
           }
 
           kubectl -n gzctf-server patch deployment gzctf \
-            --type=strategic --patch-file "${patch_file}"
+            --type=strategic --patch "${deployment_patch}"
           target_generation="$(kubectl -n gzctf-server get deployment gzctf \
             -o jsonpath='{.metadata.generation}')"
           rollout_status=0
