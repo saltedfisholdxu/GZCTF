@@ -13,5 +13,6 @@
 - [x] 提交并将同一 commit 推送到私有 Gitea 与 AGPL 公开 GitHub 仓库。
 - [x] 增加最小权限部署/运行 RBAC、SSO 配置对象、镜像拉取 Secret 接入及完整 PodTemplate 滚动回滚流程。
 - [x] 删除 CI 中重复的 ACR/Kubernetes 预检，生产发布直接消费 `main` 已验证并推送的精确 SHA 镜像。
+- [x] 修复 ASP.NET Core Handler 已消费 state 后又由协议验证器重复校验导致的 `IDX21329`，并补充伪造 state 拒绝测试。
 - [x] 删除 CI 中重复的单元测试、集成测试、测试容器和前端检查，仅保留生产镜像构建发布与手工部署。
 - [ ] 备份并隔离验收后再执行生产 Keycloak 配置、用户迁移和部署。
