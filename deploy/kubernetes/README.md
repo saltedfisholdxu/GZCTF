@@ -4,12 +4,12 @@
 
 ## 对象与边界
 
-- `gitea-deployer-rbac.yaml`：Gitea Runner 只能读取、观察和 patch `gzctf-server/gzctf` Deployment，并只读查看该 namespace 的 ReplicaSet/Pod；不能读取 Secret，不能操作 PostgreSQL、Garnet 或集群级资源。
+- `gitea-deployer-rbac.yaml`：Gitea Runner 只能 `get/patch` `gzctf-server/gzctf` Deployment；不能列举 Deployment、ReplicaSet 或 Pod，不能读取 Secret，不能操作 PostgreSQL、Garnet 或集群级资源。
 - `gzctf-runtime-rbac.yaml`：GZCTF 运行时只可列出 namespace，并在 `gzctf-challenges` 创建/删除题目 Pod/Service、创建/更新 NetworkPolicy 和镜像拉取 Secret。
 - `gzctf-sso-config.yaml`：创建 SSO ConfigMap 与空 Secret。初始状态固定 `Sso.Enabled=false`，本地登录、凭据管理和注册保持开启，因此应用清单后不会切换认证方式。
 - `gzctf-deployment-patch.yaml`：由 CI 替换 `__GZCTF_IMAGE__`，一次性更新镜像、运行 ServiceAccount、配置引用和健康探针，触发一个 Deployment RollingUpdate。
 
-旧的 `gzctf-sa -> cluster-admin` 绑定在候选镜像完成动态题目创建/销毁验收前不得删除。候选 Pod 使用 `gzctf-runtime`；失败时 `kubectl rollout undo` 会恢复旧 ReplicaSet 及其完整 PodTemplate。
+旧的 `gzctf-sa -> cluster-admin` 绑定在候选镜像完成动态题目创建/销毁验收前不得删除。候选 Pod 使用 `gzctf-runtime`；发布前 CI 会保存原 Deployment 的完整 PodTemplate、strategy、`minReadySeconds`、`progressDeadlineSeconds` 和 `revisionHistoryLimit`，失败时用 strategic patch 精确恢复。
 
 ## 首次准备（不切镜像）
 
@@ -50,6 +50,8 @@ kubectl auth can-i get secrets \
 - `KUBECONFIG`
 - `SIXLABORS_LICENSE`
 
+Secret 配好后，可以在任意分支手工触发本工作流并保持 `deploy_production=false`。工作流会在发布 Runner 上只执行 ACR 登录/登出，并在预装 `kubectl` 和 `jq` 的 `k8s` Runner 上验证实际 kubeconfig 权限、对完整发布与恢复 patch 做 server-side dry-run；不会构建生产镜像，也不会修改 Deployment。生产部署 job 同时依赖这两个预检成功。
+
 ## 写入 OIDC Client Secret
 
 从 Keycloak `Clients -> gzctf -> Credentials` 复制真实值，只写入 `gzctf-sso-secret` 的 `GZCTF_Sso__ClientSecret` 键。推荐通过临时权限受限文件注入，避免出现在命令行参数和 Git 中：
@@ -72,11 +74,6 @@ rm -f "${secret_file}"
 
 生产发布只允许从 `main` 手工触发。CI 会构建 `prod-<sha8>` 镜像，再以一次 strategic merge patch 更新完整 PodTemplate；`maxUnavailable=0`、`maxSurge=1`，且 startup/readiness/liveness 都通过 `3000/healthz` 判定。
 
-发布失败、超时或实际镜像不一致时，CI 执行：
+发布失败、超时或实际镜像不一致时，CI 将上述发布前状态组成含 `$patch: replace` 的 strategic patch，恢复完整 PodTemplate 与策略。发布和恢复的 Ready 判定都只读取 `deployment/gzctf` 的 generation、replicas、updatedReplicas、readyReplicas、availableReplicas 和 unavailableReplicas，不使用 `rollout status/undo`。
 
-```bash
-kubectl -n gzctf-server rollout undo deployment/gzctf --to-revision=<旧 revision>
-kubectl -n gzctf-server rollout status deployment/gzctf --timeout=5m
-```
-
-该回滚恢复旧 revision 的完整 PodTemplate，不只是把 image 字段改回去。上线后还必须分别报告：镜像已发布、Deployment rollout 成功、Pod Ready、SSO 已启用、迁移已验证、端到端登录已通过；这些状态不能互相代替。
+这样 deployer 不需要 namespace 级的 Deployment/ReplicaSet/Pod 读权限，也不会因为回滚而只替换 image 字段。如果发布期间检测到 Deployment spec 被其他操作修改，CI 会拒绝覆盖并停止自动恢复。上线后还必须分别报告：镜像已发布、Deployment rollout 成功、Pod Ready、SSO 已启用、迁移已验证、端到端登录已通过；这些状态不能互相代替。

@@ -124,6 +124,10 @@ jobs:
           https_proxy_value="${HTTPS_PROXY:-${https_proxy:-${http_proxy_value}}}"
           test -n "${https_proxy_value}"
           builder_name="gzctf-${GITHUB_RUN_ID}-verify"
+          cleanup_builder() {
+            docker buildx rm --force "${builder_name}" >/dev/null 2>&1 || true
+          }
+          trap cleanup_builder EXIT
           docker buildx create --name "${builder_name}" --driver docker-container \
             --driver-opt image=docker.io/moby/buildkit:buildx-stable-1 \
             --driver-opt network=host \
@@ -146,6 +150,110 @@ jobs:
             sleep 10
           done
           docker image inspect gzctf-ci:${GITHUB_SHA} --format '镜像已构建: {{index .RepoTags 0}}'
+
+  registry-preflight:
+    name: 发布前验证 ACR 凭据
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: 验证阿里云 ACR 登录
+        env:
+          ALIYUN_CR_USERNAME: ${{ secrets.ALIYUN_CR_USERNAME }}
+          ALIYUN_CR_PASSWORD: ${{ secrets.ALIYUN_CR_PASSWORD }}
+        run: |
+          set -eu
+          test -n "${ALIYUN_CR_USERNAME:-}"
+          test -n "${ALIYUN_CR_PASSWORD:-}"
+          docker_config_dir="$(mktemp -d /tmp/gzctf-docker-config.XXXXXX)"
+          case "${docker_config_dir}" in
+            /tmp/gzctf-docker-config.*) ;;
+            *) echo "非预期的 Docker 临时目录" >&2; exit 1 ;;
+          esac
+          cleanup() {
+            case "${docker_config_dir:-}" in
+              /tmp/gzctf-docker-config.*) rm -rf -- "${docker_config_dir}" ;;
+            esac
+          }
+          trap cleanup EXIT
+          export DOCKER_CONFIG="${docker_config_dir}"
+          printf '%s' "${ALIYUN_CR_PASSWORD}" | docker login registry.cn-hangzhou.aliyuncs.com \
+            --username "${ALIYUN_CR_USERNAME}" --password-stdin
+          docker logout registry.cn-hangzhou.aliyuncs.com >/dev/null
+
+  cluster-preflight:
+    name: 发布前验证 Kubernetes 权限
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: k8s
+    timeout-minutes: 5
+    steps:
+      - name: 检出部署清单
+        uses: actions/checkout@v4
+
+      - name: 验证最小权限与完整补丁
+        shell: bash
+        env:
+          KUBECONFIG_DATA: ${{ secrets.KUBECONFIG }}
+        run: |
+          set -euo pipefail
+          test -n "${KUBECONFIG_DATA:-}"
+          command -v jq >/dev/null
+          kube_tmp_dir="$(mktemp -d /tmp/gzctf-kube-preflight.XXXXXX)"
+          case "${kube_tmp_dir}" in
+            /tmp/gzctf-kube-preflight.*) ;;
+            *) echo "非预期的 Kubernetes 临时目录" >&2; exit 1 ;;
+          esac
+          cleanup() {
+            case "${kube_tmp_dir:-}" in
+              /tmp/gzctf-kube-preflight.*) rm -rf -- "${kube_tmp_dir}" ;;
+            esac
+          }
+          trap cleanup EXIT
+          umask 077
+          printf '%s\n' "${KUBECONFIG_DATA}" > "${kube_tmp_dir}/config"
+          chmod 600 "${kube_tmp_dir}/config"
+          export KUBECONFIG="${kube_tmp_dir}/config"
+
+          deployment_snapshot="${kube_tmp_dir}/gzctf-deployment-before.json"
+          kubectl -n gzctf-server get deployment gzctf -o json > "${deployment_snapshot}"
+          current_image="$(jq -er '
+            .spec.template.spec.containers
+            | map(select(.name == "gzctf"))
+            | if length == 1 then .[0].image else error("gzctf container is not unique") end
+          ' "${deployment_snapshot}")"
+          test -n "${current_image}"
+          patch_file="${kube_tmp_dir}/gzctf-deployment-patch.yaml"
+          sed "s|__GZCTF_IMAGE__|${current_image}|g" \
+            deploy/kubernetes/gzctf-deployment-patch.yaml > "${patch_file}"
+          restore_file="${kube_tmp_dir}/gzctf-deployment-restore.json"
+          jq -e '
+            .spec as $spec
+            | {
+                spec: {
+                  minReadySeconds: ($spec.minReadySeconds // null),
+                  progressDeadlineSeconds: ($spec.progressDeadlineSeconds // null),
+                  revisionHistoryLimit: ($spec.revisionHistoryLimit // null),
+                  strategy: ($spec.strategy + {"$patch": "replace"}),
+                  template: ($spec.template + {"$patch": "replace"})
+                }
+              }
+          ' "${deployment_snapshot}" > "${restore_file}"
+
+          test "$(kubectl auth can-i patch deployment/gzctf -n gzctf-server)" = "yes"
+          test "$(kubectl auth can-i get deployment/gzctf -n gzctf-server)" = "yes"
+          test "$(kubectl auth can-i list deployments -n gzctf-server)" = "no"
+          test "$(kubectl auth can-i list replicasets -n gzctf-server)" = "no"
+          test "$(kubectl auth can-i list pods -n gzctf-server)" = "no"
+          test "$(kubectl auth can-i get secrets -n gzctf-server)" = "no"
+          test "$(kubectl auth can-i patch deployment/gzctf-db -n gzctf-server)" = "no"
+          kubectl -n gzctf-server patch deployment gzctf \
+            --type=strategic --dry-run=server --patch-file "${patch_file}" -o name
+          kubectl -n gzctf-server patch deployment gzctf \
+            --type=strategic --dry-run=server --patch-file "${restore_file}" -o name
+          deployment_state="$(kubectl -n gzctf-server get deployment gzctf \
+            -o jsonpath='{.metadata.generation}{"|"}{.status.observedGeneration}{"|"}{.spec.replicas}{"|"}{.status.replicas}{"|"}{.status.updatedReplicas}{"|"}{.status.readyReplicas}{"|"}{.status.availableReplicas}{"|"}{.status.unavailableReplicas}')"
+          test -n "${deployment_state}"
+          echo "Deployment 状态可读：${deployment_state}"
 
   publish:
     name: 发布 main 镜像
@@ -193,6 +301,23 @@ jobs:
           set -eu
           test -n "${ALIYUN_CR_USERNAME:-}"
           test -n "${ALIYUN_CR_PASSWORD:-}"
+          docker_config_dir="$(mktemp -d /tmp/gzctf-docker-publish.XXXXXX)"
+          case "${docker_config_dir}" in
+            /tmp/gzctf-docker-publish.*) ;;
+            *) echo "非预期的 Docker 临时目录" >&2; exit 1 ;;
+          esac
+          builder_name=""
+          cleanup() {
+            if [ -n "${builder_name:-}" ]; then
+              docker buildx rm --force "${builder_name}" >/dev/null 2>&1 || true
+            fi
+            case "${docker_config_dir:-}" in
+              /tmp/gzctf-docker-publish.*) rm -rf -- "${docker_config_dir}" ;;
+            esac
+          }
+          trap cleanup EXIT
+          umask 077
+          export DOCKER_CONFIG="${docker_config_dir}"
           sha8="$(printf '%s' "${GITHUB_SHA}" | cut -c 1-8)"
           image="${IMAGE_REPOSITORY}:prod-${sha8}"
           printf '%s' "${ALIYUN_CR_PASSWORD}" | docker login registry.cn-hangzhou.aliyuncs.com \
@@ -229,7 +354,10 @@ jobs:
     name: 手动部署生产
     if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && inputs.deploy_production
     runs-on: k8s
-    needs: publish
+    needs:
+      - publish
+      - registry-preflight
+      - cluster-preflight
     timeout-minutes: 15
     concurrency:
       group: gzctf-production
@@ -239,17 +367,25 @@ jobs:
         uses: actions/checkout@v4
 
       - name: 滚动发布并在失败时恢复完整 PodTemplate
+        shell: bash
         env:
           KUBECONFIG_DATA: ${{ secrets.KUBECONFIG }}
         run: |
-          set -eu
+          set -euo pipefail
           test -n "${KUBECONFIG_DATA:-}"
-          kube_tmp_dir="$(mktemp -d)"
-          test -n "${kube_tmp_dir}"
+          command -v jq >/dev/null
+          kube_tmp_dir="$(mktemp -d /tmp/gzctf-kube-deploy.XXXXXX)"
+          case "${kube_tmp_dir}" in
+            /tmp/gzctf-kube-deploy.*) ;;
+            *) echo "非预期的 Kubernetes 临时目录" >&2; exit 1 ;;
+          esac
           cleanup() {
-            test -n "${kube_tmp_dir:-}" && rm -rf -- "${kube_tmp_dir}"
+            case "${kube_tmp_dir:-}" in
+              /tmp/gzctf-kube-deploy.*) rm -rf -- "${kube_tmp_dir}" ;;
+            esac
           }
           trap cleanup EXIT
+          umask 077
           printf '%s\n' "${KUBECONFIG_DATA}" > "${kube_tmp_dir}/config"
           chmod 600 "${kube_tmp_dir}/config"
           export KUBECONFIG="${kube_tmp_dir}/config"
@@ -261,32 +397,122 @@ jobs:
             deploy/kubernetes/gzctf-deployment-patch.yaml > "${patch_file}"
           grep -Fq "image: ${next_image}" "${patch_file}"
 
-          previous_image="$(kubectl -n gzctf-server get deployment gzctf \
-            -o jsonpath='{.spec.template.spec.containers[?(@.name=="gzctf")].image}')"
-          previous_revision="$(kubectl -n gzctf-server get deployment gzctf \
-            -o jsonpath='{.metadata.annotations.deployment\.kubernetes\.io/revision}')"
+          deployment_snapshot="${kube_tmp_dir}/gzctf-deployment-before.json"
+          kubectl -n gzctf-server get deployment gzctf -o json > "${deployment_snapshot}"
+          previous_image="$(jq -er '
+            .spec.template.spec.containers
+            | map(select(.name == "gzctf"))
+            | if length == 1 then .[0].image else error("gzctf container is not unique") end
+          ' "${deployment_snapshot}")"
           test -n "${previous_image}"
-          test -n "${previous_revision}"
+
+          restore_file="${kube_tmp_dir}/gzctf-deployment-restore.json"
+          jq -e '
+            .spec as $spec
+            | {
+                spec: {
+                  minReadySeconds: ($spec.minReadySeconds // null),
+                  progressDeadlineSeconds: ($spec.progressDeadlineSeconds // null),
+                  revisionHistoryLimit: ($spec.revisionHistoryLimit // null),
+                  strategy: ($spec.strategy + {"$patch": "replace"}),
+                  template: ($spec.template + {"$patch": "replace"})
+                }
+              }
+          ' "${deployment_snapshot}" > "${restore_file}"
+
+          wait_for_deployment() {
+            local expected_generation="$1"
+            local max_attempts="$2"
+            local attempt state generation observed desired replicas updated ready available unavailable progressing_reason
+            [[ "${expected_generation}" =~ ^[0-9]+$ ]]
+            for ((attempt = 1; attempt <= max_attempts; attempt++)); do
+              state="$(kubectl -n gzctf-server get deployment gzctf \
+                -o jsonpath='{.metadata.generation}{"|"}{.status.observedGeneration}{"|"}{.spec.replicas}{"|"}{.status.replicas}{"|"}{.status.updatedReplicas}{"|"}{.status.readyReplicas}{"|"}{.status.availableReplicas}{"|"}{.status.unavailableReplicas}{"|"}{.status.conditions[?(@.type=="Progressing")].reason}')" || return 1
+              IFS='|' read -r generation observed desired replicas updated ready available unavailable progressing_reason <<< "${state}"
+              observed="${observed:-0}"
+              desired="${desired:-0}"
+              replicas="${replicas:-0}"
+              updated="${updated:-0}"
+              ready="${ready:-0}"
+              available="${available:-0}"
+              unavailable="${unavailable:-0}"
+              for value in "${generation}" "${observed}" "${desired}" "${replicas}" \
+                "${updated}" "${ready}" "${available}" "${unavailable}"; do
+                if [[ ! "${value}" =~ ^[0-9]+$ ]]; then
+                  echo "Deployment 返回了非法数字状态：${state}" >&2
+                  return 1
+                fi
+              done
+              echo "generation=${generation}/${observed} replicas=${replicas}/${desired} updated=${updated} ready=${ready} available=${available} unavailable=${unavailable}"
+              if (( generation != expected_generation )); then
+                echo "检测到 Deployment spec 并发修改：期望 generation=${expected_generation}，实际 generation=${generation}" >&2
+                return 2
+              fi
+              if (( observed >= expected_generation && desired > 0 \
+                && replicas == desired && updated == desired && ready == desired \
+                && available == desired && unavailable == 0 )); then
+                return 0
+              fi
+              if (( observed >= expected_generation )) \
+                && [ "${progressing_reason}" = "ProgressDeadlineExceeded" ]; then
+                return 1
+              fi
+              sleep 5
+            done
+            return 1
+          }
+
+          restore_previous_deployment() {
+            local failed_generation="$1"
+            local current_generation restore_generation
+            current_generation="$(kubectl -n gzctf-server get deployment gzctf \
+              -o jsonpath='{.metadata.generation}')"
+            if [ "${current_generation}" != "${failed_generation}" ]; then
+              echo "恢复前发现 Deployment spec 已被其他操作修改，拒绝覆盖" >&2
+              return 2
+            fi
+            if ! kubectl -n gzctf-server patch deployment gzctf \
+              --type=strategic --patch-file "${restore_file}"; then
+              echo "恢复补丁提交失败" >&2
+              return 3
+            fi
+            restore_generation="$(kubectl -n gzctf-server get deployment gzctf \
+              -o jsonpath='{.metadata.generation}')"
+            if ! wait_for_deployment "${restore_generation}" 60; then
+              echo "恢复补丁已提交，但 Deployment 未在 5 分钟内恢复 Ready" >&2
+              return 1
+            fi
+            echo "Deployment 已恢复发布前的 PodTemplate 与策略"
+          }
 
           kubectl -n gzctf-server patch deployment gzctf \
             --type=strategic --patch-file "${patch_file}"
-          if ! kubectl -n gzctf-server rollout status deployment/gzctf --timeout=5m; then
-            echo "发布失败，恢复 revision ${previous_revision}（${previous_image}）" >&2
-            kubectl -n gzctf-server rollout undo deployment/gzctf \
-              --to-revision="${previous_revision}"
-            kubectl -n gzctf-server rollout status deployment/gzctf --timeout=5m
+          target_generation="$(kubectl -n gzctf-server get deployment gzctf \
+            -o jsonpath='{.metadata.generation}')"
+          rollout_status=0
+          wait_for_deployment "${target_generation}" 60 || rollout_status="$?"
+          if [ "${rollout_status}" -ne 0 ]; then
+            if [ "${rollout_status}" -eq 2 ]; then
+              echo "发布期间发现并发 spec 修改，为避免覆盖其他操作，不执行自动恢复" >&2
+              exit 1
+            fi
+            echo "发布失败，恢复发布前的完整 PodTemplate 与策略（${previous_image}）" >&2
+            restore_previous_deployment "${target_generation}" || true
             exit 1
           fi
 
-          actual_image="$(kubectl -n gzctf-server get deployment gzctf \
-            -o jsonpath='{.spec.template.spec.containers[?(@.name=="gzctf")].image}')"
+          post_deployment_state="$(kubectl -n gzctf-server get deployment gzctf \
+            -o jsonpath='{.metadata.generation}{"|"}{.spec.template.spec.containers[?(@.name=="gzctf")].image}')"
+          IFS='|' read -r actual_generation actual_image <<< "${post_deployment_state}"
+          if [ "${actual_generation}" != "${target_generation}" ]; then
+            echo "镜像校验前发现并发 spec 修改，不执行自动恢复" >&2
+            exit 1
+          fi
           if [ "${actual_image}" != "${next_image}" ]; then
             echo "发布后镜像不一致：期望 ${next_image}，实际 ${actual_image}" >&2
-            kubectl -n gzctf-server rollout undo deployment/gzctf \
-              --to-revision="${previous_revision}"
-            kubectl -n gzctf-server rollout status deployment/gzctf --timeout=5m
+            restore_previous_deployment "${target_generation}" || true
             exit 1
           fi
 
-          kubectl -n gzctf-server get deployment gzctf -o wide
-          kubectl -n gzctf-server get pods -l app=gzctf -o wide
+          kubectl -n gzctf-server get deployment gzctf \
+            -o custom-columns='NAME:.metadata.name,IMAGE:.spec.template.spec.containers[?(@.name=="gzctf")].image,GENERATION:.metadata.generation,OBSERVED:.status.observedGeneration,READY:.status.readyReplicas,AVAILABLE:.status.availableReplicas'

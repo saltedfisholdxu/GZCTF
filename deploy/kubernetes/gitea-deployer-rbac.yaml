@@ -32,13 +32,7 @@ rules:
   - apiGroups: ["apps"]
     resources: ["deployments"]
     resourceNames: ["gzctf"]
-    verbs: ["get", "patch", "watch"]
-  - apiGroups: ["apps"]
-    resources: ["replicasets"]
-    verbs: ["get", "list", "watch"]
-  - apiGroups: [""]
-    resources: ["pods"]
-    verbs: ["get", "list", "watch"]
+    verbs: ["get", "patch"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
