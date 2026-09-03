@@ -17,6 +17,7 @@
 - Web Origin：`https://gz.imxbt.cn`
 - Client：Confidential；Standard Flow 开启；PKCE S256；Implicit 与 Direct Access Grants 关闭。
 - Client mapper：`sf_identity_source_id` → `gzctf_uid`，启用 ID Token、Access Token、UserInfo。
+- User Profile：将 `sf_identity_source`、`sf_identity_source_id` 声明为受管属性，仅管理员可查看和编辑，普通用户不能伪造迁移来源。
 
 ## 新增运行变量
 
@@ -56,8 +57,10 @@ GZCTF_ConnectionStrings__RedisCache
 
 本地构建与 Gitea Actions 均只通过 `SixLaborsLicenseKey` 环境变量注入已授权许可证；许可证内容不进入 Git、命令输出或构建日志。Gitea 仓库 Secret 名称为 `SIXLABORS_LICENSE`。
 
-依赖安全更新将 Microsoft ASP.NET Core / EF Core 补丁组升级到 `10.0.10`、`System.IdentityModel.Tokens.Jwt` 升级到 `8.19.2`、Testcontainers 升级到 `4.14.0`（传递依赖 `SSH.NET 2026.0.0`），修复 `System.Security.Cryptography.Xml 10.0.9` 的五个高危 GHSA 与 `SSH.NET 2025.1.0` 的 `GHSA-q939-rpr3-3284`。四个 .NET 项目的 NuGet 传递依赖漏洞扫描均未再发现当前已知漏洞。Gitea 验证作业安装 `libpcap-dev`，供启用流量捕获的动态容器集成测试使用。
+依赖安全更新将 Microsoft ASP.NET Core / EF Core 补丁组升级到 `10.0.10`、`System.IdentityModel.Tokens.Jwt` 升级到 `8.19.2`、Testcontainers 升级到 `4.14.0`（传递依赖 `SSH.NET 2026.0.0`），修复 `System.Security.Cryptography.Xml 10.0.9` 的五个高危 GHSA 与 `SSH.NET 2025.1.0` 的 `GHSA-q939-rpr3-3284`。四个 .NET 项目的 NuGet 传递依赖漏洞扫描均未再发现当前已知漏洞。
 
-Gitea 分支 Run 132/133 已通过后端、前端、ReadyToRun 与 linux/amd64 Docker 验证；Run 134 的 CodeQL 失败来自 GitHub 专用上传接口在 Gitea 返回 404，现已限制 CodeQL 只在 GitHub 执行。
+当前 Gitea Actions 不再在 PR 或功能分支重复执行本地质量测试，也不运行 CodeQL、BusyBox 集成测试、`libpcap-dev` 安装或 ACR/Kubernetes 预检。`main` 仅在 `src/**` 变化时构建并发布一次精确 SHA 镜像；生产部署只能从 `main` 手工触发。
+
+2026-09-03 生产前配置核对：Keycloak `gzctf` Client 的 confidential、Standard Flow、PKCE S256、回调/登出 URL 和 `gzctf_uid` mapper 已保存；User Profile 保留 Keycloak 26.7.3 官方默认 `username`、`email`、`firstName`、`lastName` 定义，并将 `sf_identity_source`、`sf_identity_source_id` 限制为仅管理员可查看和编辑。Kubernetes `gzctf-sso-secret` 与 Keycloak 当前 Client Secret 的 SHA-256 比对一致，核对过程未输出明文。
 
 尚未完成：合并 `main`、发布生产镜像、候选 Deployment rollout、生产备份/迁移以及真实 Keycloak 端到端登录。代码分支验证不代表这些状态。
