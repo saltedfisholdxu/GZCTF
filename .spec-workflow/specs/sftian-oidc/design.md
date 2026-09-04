@@ -6,13 +6,15 @@
 
 ASP.NET Core OIDC Handler 先用受保护的 state 与 correlation Cookie 完成 state 校验，随后会把协议消息中的 state 替换为可选的业务 `userstate`。因此保持 `OpenIdConnectOptions` 默认的 `ProtocolValidator.RequireStateValidation=false`，不得在协议验证器中重复启用 state 校验；伪造、缺失或无法解密的 state 仍会在 Handler 层被拒绝。
 
+生产将 `PushedAuthorizationBehavior` 固定为 `Require`，Keycloak client 同时要求 PAR。令牌验证参数只允许 `RS256`；Discovery 负责提供 issuer 与 `jwks_uri`，OIDC Handler 按 `kid` 获取、缓存并轮换 Keycloak 签名公钥。不得把当前公钥或 `kid` 写死在应用配置中。
+
 应用 Cookie 只复制登出所需的 `id_token`，同时加入内部 `sftian:sub`、`sftian:sid`、`sftian:login_at` claims。access token、refresh token 和授权码不进入应用 Cookie或日志。
 
 ## 账号关联
 
 1. 先按 `FindByLoginAsync("keycloak", sub)` 查找已有绑定。
-2. 首次登录时尝试将 `gzctf_uid` 解析为 GUID，并通过 `UserManager.FindByIdAsync` 定位迁移用户。
-3. 未命中时只允许使用 `email_verified=true` 的邮箱；按规范化邮箱查询最多两条，只有唯一命中才允许绑定。
+2. 首次登录时先尝试将受签名保护的 `gzctf_uid` 解析为 GUID，并通过 `UserManager.FindByIdAsync` 定位迁移用户；这条路径不依赖邮箱，以兼容历史异常或缺失邮箱。
+3. `gzctf_uid` 未命中时才要求 `email_verified=true`；按规范化邮箱查询最多两条，只有唯一命中才允许绑定。
 4. 仍未命中时创建普通本地用户。初始用户名优先取非空白的 `display_name`，其次取 `preferred_username`，再沿用邮箱前缀回退；保留大小写，沿用长度限制和基于 `sub` 的稳定冲突后缀。显示名称只用于新建，绝不参与账号匹配或覆盖已有关联账号。
 5. 找到本地用户后先拒绝 `Role.Banned`，再调用 `AddLoginAsync`。并发冲突时重新按外部登录查找，不猜测绑定目标。
 
@@ -37,3 +39,5 @@ Keycloak client 只启用 confidential Authorization Code flow 与 PKCE S256。`
 GZCTF 个人资料页复用独立 `useSso` 的开关，只对该输入框切换“本站显示名称”标签与字段说明；不全局替换用户名翻译键。说明使用 Mantine 输入组件的关联 description，置于输入框下方，关闭 SSO 时不显示。底层 `userName` 表单值和保存请求完全不变。
 
 启用显示名称必填前，按用户授权通过 Keycloak Admin API 回填空属性。迁移账号按原 source GUID 读取 GZCTF 用户名以保留大小写、不带迁移消歧后缀；原名不满足长度校验时使用该账号当前合法 SSO 用户名。仅补空值、不覆盖自定义显示名称，保存修改前记录并逐项读回，不直接写 Keycloak 数据库，不改密码、身份来源或本地业务数据。
+
+Keycloak client 显式固定 ID Token 与 Access Token 签名算法为 `RS256`，并要求 PAR。应用只通过标准 OIDC middleware 消费 Discovery/JWKS，不接触 Keycloak 私钥。

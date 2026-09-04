@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
+using Microsoft.IdentityModel.Tokens;
 
 namespace GZCTF.Extensions.Startup;
 
@@ -73,6 +74,7 @@ internal static class IdentityExtension
         options.ResponseType = OpenIdConnectResponseType.Code;
         options.ResponseMode = OpenIdConnectResponseMode.FormPost;
         options.UsePkce = true;
+        options.PushedAuthorizationBehavior = PushedAuthorizationBehavior.Require;
         options.SaveTokens = true;
         options.GetClaimsFromUserInfoEndpoint = true;
         options.MapInboundClaims = false;
@@ -95,6 +97,7 @@ internal static class IdentityExtension
         options.TokenValidationParameters.ValidateLifetime = true;
         options.TokenValidationParameters.RequireSignedTokens = true;
         options.TokenValidationParameters.RequireExpirationTime = true;
+        options.TokenValidationParameters.ValidAlgorithms = [SecurityAlgorithms.RsaSha256];
 
         options.Events = new OpenIdConnectEvents
         {
