@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using System.Security.Cryptography;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using GZCTF.Controllers;
@@ -27,6 +29,19 @@ namespace GZCTF.Test.UnitTests.Sso;
 
 public class SsoProtocolTests
 {
+    [Fact]
+    public void OidcOptions_MapsDisplayNameFromUserInfoWithoutChangingCase()
+    {
+        var options = new OpenIdConnectOptions();
+        IdentityExtension.ConfigureOpenIdConnect(options, new SsoConfig());
+        using var userInfo = JsonDocument.Parse("""{"display_name":"SfTian-test"}""");
+        var identity = new ClaimsIdentity();
+        foreach (var action in options.ClaimActions)
+            action.Run(userInfo.RootElement, identity, "https://issuer.example");
+
+        Assert.Equal("SfTian-test", identity.FindFirst(SsoConstants.DisplayNameClaim)?.Value);
+    }
+
     [Theory]
     [InlineData(null, "/")]
     [InlineData("", "/")]

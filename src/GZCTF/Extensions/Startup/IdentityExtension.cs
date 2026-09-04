@@ -82,6 +82,7 @@ internal static class IdentityExtension
         options.Scope.Add(OpenIdConnectScope.Profile);
         options.Scope.Add(OpenIdConnectScope.Email);
         options.ClaimActions.MapUniqueJsonKey("gzctf_uid", "gzctf_uid");
+        options.ClaimActions.MapUniqueJsonKey(SsoConstants.DisplayNameClaim, SsoConstants.DisplayNameClaim);
         options.ClaimActions.MapUniqueJsonKey("sid", "sid");
         options.ProtocolValidator.RequireNonce = true;
         // OIDC Handler 已先通过受保护的 state 和关联 Cookie 完成校验，随后会把消息中的 state
