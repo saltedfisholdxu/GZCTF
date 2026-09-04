@@ -37,6 +37,7 @@
     },
     "welcome": "Hallo, {{decodeEmail}}👋",
     "sso": {
+      "local_display_name_hint": "Ändert nur Ihren Namen auf dieser Website, nicht Ihr Sf SSO-Anmeldekonto.",
       "existing_account": {
         "description": "Verwenden Sie Ihr bisheriges Konto und Passwort. Eine erneute Registrierung ist nicht erforderlich; Teams, Einreichungen und Ergebnisse bleiben unverändert.",
         "title": "Bereits registrierte Konten können sich direkt anmelden"
@@ -46,6 +47,7 @@
     }
   },
   "label": {
+    "local_display_name": "Anzeigename auf dieser Website",
     "bio": "Beschreibung",
     "captcha": "Captcha",
     "email": "E-Mail",

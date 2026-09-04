@@ -37,6 +37,7 @@
     },
     "welcome": "Xin chào, {{decodeEmail}} 👋",
     "sso": {
+      "local_display_name_hint": "Chỉ thay đổi tên trên trang này, không thay đổi tài khoản đăng nhập Sf SSO.",
       "existing_account": {
         "description": "Sử dụng tài khoản và mật khẩu cũ của bạn. Không cần đăng ký lại; đội, bài nộp và điểm số vẫn được giữ nguyên.",
         "title": "Tài khoản đã đăng ký có thể đăng nhập trực tiếp"
@@ -46,6 +47,7 @@
     }
   },
   "label": {
+    "local_display_name": "Tên hiển thị trên trang này",
     "bio": "Mô tả",
     "captcha": "Captcha",
     "email": "Email",

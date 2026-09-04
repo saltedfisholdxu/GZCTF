@@ -37,6 +37,7 @@
     },
     "welcome": "Hola, {{decodeEmail}}👋",
     "sso": {
+      "local_display_name_hint": "Solo cambia tu nombre en este sitio, no tu cuenta de acceso a Sf SSO.",
       "existing_account": {
         "description": "Usa tu cuenta y contraseña actuales. No necesitas registrarte de nuevo; tu equipo, envíos y puntuaciones no cambiarán.",
         "title": "Las cuentas ya registradas pueden iniciar sesión directamente"
@@ -46,6 +47,7 @@
     }
   },
   "label": {
+    "local_display_name": "Nombre visible en este sitio",
     "bio": "Descripción",
     "captcha": "Captcha",
     "email": "Correo electrónico",

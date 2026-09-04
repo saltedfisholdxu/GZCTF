@@ -37,6 +37,7 @@
     },
     "welcome": "Hello, {{decodeEmail}}👋",
     "sso": {
+      "local_display_name_hint": "Changes only your name on this site, not your Sf SSO sign-in account.",
       "existing_account": {
         "description": "Use your existing account and password. No new registration is needed, and your team, submissions, and scores remain unchanged.",
         "title": "Previously registered accounts can sign in directly"
@@ -46,6 +47,7 @@
     }
   },
   "label": {
+    "local_display_name": "Display name on this site",
     "bio": "Description",
     "captcha": "Captcha",
     "email": "Email",

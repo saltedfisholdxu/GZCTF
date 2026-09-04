@@ -156,9 +156,12 @@ const Profile: FC = () => {
       <Stack gap="md" m="auto">
         <Group wrap="nowrap">
           <TextInput
-            label={t('account.label.username')}
+            label={t(ssoConfig.enabled ? 'account.label.local_display_name' : 'account.label.username')}
+            description={ssoConfig.enabled ? t('account.content.sso.local_display_name_hint') : undefined}
+            inputWrapperOrder={['label', 'input', 'description', 'error']}
             type="text"
             w="100%"
+            miw={0}
             value={profile.userName ?? 'ctfer'}
             disabled={disabled}
             onChange={(event) => setProfile({ ...profile, userName: event.target.value })}
