@@ -57,6 +57,22 @@ public class SsoAccountLinkerTests
     }
 
     [Fact]
+    public async Task MigratedId_DoesNotRequireEmailClaim()
+    {
+        await using var services = CreateServices();
+        var migrated = await CreateUserAsync(services, "migrated-no-email", "legacy@example.com");
+
+        using var scope = services.CreateScope();
+        var result = await scope.ServiceProvider.GetRequiredService<SsoAccountLinker>()
+            .LinkAsync(Principal("subject-migrated-no-email", migratedId: migrated.Id),
+                new DefaultHttpContext(), CancellationToken.None);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(migrated.Id, result.User!.Id);
+        Assert.False(result.Created);
+    }
+
+    [Fact]
     public async Task UniqueVerifiedEmail_LinksExistingUserOnlyOnce()
     {
         await using var services = CreateServices();

@@ -40,20 +40,20 @@ public sealed class SsoAccountLinker(
         if (user is not null)
             return CheckUser(user);
 
-        // 已完成绑定的身份只按 sub 识别；邮箱仅参与首次绑定。
+        if (Guid.TryParse(principal.FindFirstValue("gzctf_uid"), out var migratedUserId))
+        {
+            user = await userManager.FindByIdAsync(migratedUserId.ToString());
+            if (user is not null)
+                return await BindAsync(user, sub, "source_id", false);
+        }
+
+        // 已完成绑定和迁移身份只按稳定标识认人；邮箱仅参与兜底首次绑定与新建账号。
         var email = principal.FindFirstValue("email")?.Trim();
         var emailVerified = bool.TryParse(principal.FindFirstValue("email_verified"), out var verified) && verified;
         if (string.IsNullOrWhiteSpace(email) || !emailVerified)
         {
             logger.LogWarning("SSO 首次登录缺少已验证邮箱");
             return new(null, SsoLinkFailure.InvalidClaims);
-        }
-
-        if (Guid.TryParse(principal.FindFirstValue("gzctf_uid"), out var migratedUserId))
-        {
-            user = await userManager.FindByIdAsync(migratedUserId.ToString());
-            if (user is not null)
-                return await BindAsync(user, sub, "source_id", false);
         }
 
         var normalizedEmail = userManager.NormalizeEmail(email);

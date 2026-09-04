@@ -127,7 +127,7 @@ public class SsoProtocolTests
         Assert.Equal(SsoConstants.CallbackPath, options.CallbackPath);
         Assert.Equal(OpenIdConnectResponseType.Code, options.ResponseType);
         Assert.Equal(OpenIdConnectResponseMode.FormPost, options.ResponseMode);
-        Assert.Equal(PushedAuthorizationBehavior.UseIfAvailable, options.PushedAuthorizationBehavior);
+        Assert.Equal(PushedAuthorizationBehavior.Require, options.PushedAuthorizationBehavior);
         Assert.True(options.UsePkce);
         Assert.True(options.SaveTokens);
         Assert.True(options.RequireHttpsMetadata);
@@ -143,6 +143,7 @@ public class SsoProtocolTests
         Assert.True(options.TokenValidationParameters.ValidateLifetime);
         Assert.True(options.TokenValidationParameters.RequireSignedTokens);
         Assert.True(options.TokenValidationParameters.RequireExpirationTime);
+        Assert.Equal([SecurityAlgorithms.RsaSha256], options.TokenValidationParameters.ValidAlgorithms);
         Assert.Equal(config.ClientId, options.TokenValidationParameters.ValidAudience);
     }
 
@@ -156,13 +157,18 @@ public class SsoProtocolTests
         var trustedKey = new RsaSecurityKey(trustedRsa) { KeyId = "trusted" };
         var configuration = new OpenIdConnectConfiguration { Issuer = issuer };
         configuration.SigningKeys.Add(trustedKey);
-        var options = new OpenIdConnectOptions
+        var options = new OpenIdConnectOptions();
+        IdentityExtension.ConfigureOpenIdConnect(options, new SsoConfig
         {
+            Enabled = true,
+            Authority = issuer,
             ClientId = audience,
-            ConfigurationManager = new StaticConfigurationManager<OpenIdConnectConfiguration>(configuration)
-        };
+            ClientSecret = "test-only"
+        });
+        options.ConfigurationManager = new StaticConfigurationManager<OpenIdConnectConfiguration>(configuration);
         var validator = new SsoLogoutTokenValidator(new StaticOptionsMonitor<OpenIdConnectOptions>(options));
         var issuedAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        var symmetricKey = new SymmetricSecurityKey(RandomNumberGenerator.GetBytes(32)) { KeyId = "trusted" };
 
         var valid = await validator.ValidateAsync(
             CreateLogoutToken(trustedKey, issuer, audience, issuedAt), CancellationToken.None);
@@ -180,7 +186,12 @@ public class SsoProtocolTests
             CreateLogoutToken(trustedKey, issuer, audience, issuedAt, includeNonce: true),
             CreateLogoutToken(trustedKey, issuer, audience, issuedAt, includeJti: false),
             CreateLogoutToken(trustedKey, issuer, audience, issuedAt, includeSession: false),
-            CreateLogoutToken(trustedKey, issuer, audience, issuedAt - 600)
+            CreateLogoutToken(trustedKey, issuer, audience, issuedAt - 600),
+            CreateLogoutToken(trustedKey, issuer, audience, issuedAt,
+                algorithm: SecurityAlgorithms.RsaSha512),
+            CreateLogoutToken(symmetricKey, issuer, audience, issuedAt,
+                algorithm: SecurityAlgorithms.HmacSha256),
+            CreateUnsignedLogoutToken(issuer, audience, issuedAt)
         };
 
         foreach (var invalidToken in invalidTokens)
@@ -188,7 +199,23 @@ public class SsoProtocolTests
     }
 
     private static string CreateLogoutToken(SecurityKey signingKey, string issuer, string audience, long issuedAt,
-        bool includeEvent = true, bool includeNonce = false, bool includeJti = true, bool includeSession = true)
+        bool includeEvent = true, bool includeNonce = false, bool includeJti = true, bool includeSession = true,
+        string algorithm = SecurityAlgorithms.RsaSha256)
+    {
+        var header = new JwtHeader(new SigningCredentials(signingKey, algorithm));
+        return new JwtSecurityTokenHandler().WriteToken(new JwtSecurityToken(header,
+            CreateLogoutPayload(issuer, audience, issuedAt, includeEvent, includeNonce, includeJti, includeSession)));
+    }
+
+    private static string CreateUnsignedLogoutToken(string issuer, string audience, long issuedAt)
+    {
+        var header = new JwtHeader();
+        return new JwtSecurityTokenHandler().WriteToken(new JwtSecurityToken(header,
+            CreateLogoutPayload(issuer, audience, issuedAt, true, false, true, true)));
+    }
+
+    private static JwtPayload CreateLogoutPayload(string issuer, string audience, long issuedAt,
+        bool includeEvent, bool includeNonce, bool includeJti, bool includeSession)
     {
         var payload = new JwtPayload
         {
@@ -212,8 +239,7 @@ public class SsoProtocolTests
         if (includeNonce)
             payload.Add("nonce", "not-allowed");
 
-        var header = new JwtHeader(new SigningCredentials(signingKey, SecurityAlgorithms.RsaSha256));
-        return new JwtSecurityTokenHandler().WriteToken(new JwtSecurityToken(header, payload));
+        return payload;
     }
 
     private sealed class StaticOptionsMonitor<T>(T value) : IOptionsMonitor<T>

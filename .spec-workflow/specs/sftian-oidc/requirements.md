@@ -19,6 +19,8 @@
 11. 支持可选的 `display_name` claim，保留展示名称大小写。仅全新本地用户创建时优先使用该值，缺失或空白时回退到 `preferred_username`；显示名称不得参与账号匹配或角色判定。
 12. Keycloak `display_name` 用户属性允许用户查看、编辑，并对用户设为必填；启用必填前仅回填既有账号的空显示名称。`firstName`、`lastName` 仅管理员可见、可编辑，用户端不再展示输入框，历史姓名数据不删除。已有绑定、迁移 GUID 或邮箱匹配到的本地用户均不得因该属性而改名。
 13. SSO 启用时，GZCTF 个人资料页将本地用户名标为“本站显示名称”，说明修改不影响 Sf SSO 登录账号；关闭 SSO 后恢复“用户名”原文案。只改显示文案，不改保存接口、唯一性或长度约束，所有语言资源保持完整。
+14. ID Token 与 back-channel logout token 必须只接受 `RS256`，签名公钥继续通过受信 Authority 的 Discovery/JWKS 自动获取和轮换，不固定单个 `kid`。
+15. 生产登录必须使用 PAR，应用和 Keycloak client 任一侧无法完成 PAR 时均应失败关闭，不得降级为浏览器携带完整授权参数。
 
 ## 用户迁移需求
 
@@ -33,5 +35,6 @@
 - 新用户首次登录仅创建一个普通本地用户；老用户落到原 GUID；重复登录不创建第二行。
 - 队伍、提交和成绩继续关联原用户；封禁与管理员权限仍完全由本地角色决定。
 - 篡改 claim、错误 secret、错误 redirect URI、无效 logout token 均不能建立或保留会话。
+- `alg=none`、HS256、RS512、未知签名密钥、错误 issuer/audience 的 ID Token 与 logout token 均必须被拒绝。
 - SSO 前后通道登出有效，回调由后端处理且不会落入 SPA fallback。
 - SSO 关闭后可回退到官方本地认证流程。
