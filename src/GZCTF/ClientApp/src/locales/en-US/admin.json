@@ -423,7 +423,7 @@
         "title": "Platform Settings"
       },
       "sso": {
-        "title": "SfTian Single Sign-On",
+        "title": "Sf SSO Single Sign-On",
         "enabled": {
           "label": "SSO enabled",
           "description": "Whether the Keycloak OIDC scheme is enabled"

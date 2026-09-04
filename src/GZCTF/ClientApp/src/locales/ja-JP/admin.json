@@ -423,7 +423,7 @@
         "title": "プラットフォーム設定"
       },
       "sso": {
-        "title": "SfTian シングルサインオン",
+        "title": "Sf SSO シングルサインオン",
         "enabled": {
           "label": "SSO 有効",
           "description": "Keycloak OIDC が有効かどうか"

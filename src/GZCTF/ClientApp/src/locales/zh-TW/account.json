@@ -13,7 +13,7 @@
     "save_profile": "保存個人信息",
     "update_email": "更改郵箱",
     "verify_account": "驗證帳戶",
-    "sso_login": "使用 SfTian 帳號登入"
+    "sso_login": "使用 Sf SSO 登入"
   },
   "content": {
     "confirm": {
@@ -37,6 +37,11 @@
     },
     "welcome": "{{decodeEmail}}, 你好👋",
     "sso": {
+      "existing_account": {
+        "description": "使用原帳號和密碼，無需重新註冊；隊伍、提交和成績保持不變。",
+        "title": "原來已註冊的帳號可直接登入"
+      },
+      "identity_platform": "登入、註冊與帳號管理統一在 Sf SSO 統一身分平臺完成。",
       "local_login": "或使用本機帳號登入"
     }
   },
@@ -97,8 +102,8 @@
       "success": "帳戶已驗證，請登錄"
     },
     "sso": {
-      "failed": "SfTian 登入失敗",
-      "try_again": "請重新嘗試 SfTian 登入"
+      "failed": "Sf SSO 登入失敗",
+      "try_again": "請重新嘗試 Sf SSO 登入"
     }
   },
   "password": {

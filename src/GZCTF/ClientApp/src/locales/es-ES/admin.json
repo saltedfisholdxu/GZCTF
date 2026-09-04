@@ -423,7 +423,7 @@
         "title": "Configuraciones de la Plataforma"
       },
       "sso": {
-        "title": "Inicio de sesión único SfTian",
+        "title": "Inicio de sesión único Sf SSO",
         "enabled": {
           "label": "SSO habilitado",
           "description": "Indica si Keycloak OIDC está habilitado"

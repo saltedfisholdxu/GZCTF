@@ -13,7 +13,7 @@
     "save_profile": "Enregistrer le profil",
     "update_email": "Changer l'email",
     "verify_account": "Vérifier le compte",
-    "sso_login": "Se connecter avec SfTian"
+    "sso_login": "Se connecter avec Sf SSO"
   },
   "content": {
     "confirm": {
@@ -37,6 +37,11 @@
     },
     "welcome": "Bonjour, {{decodeEmail}}👋",
     "sso": {
+      "existing_account": {
+        "description": "Utilisez votre compte et votre mot de passe actuels. Aucune nouvelle inscription n'est nécessaire ; votre équipe, vos soumissions et vos scores restent inchangés.",
+        "title": "Les comptes déjà inscrits peuvent se connecter directement"
+      },
+      "identity_platform": "La connexion, l'inscription et la gestion du compte s'effectuent sur la plateforme d'identité Sf SSO.",
       "local_login": "Ou se connecter avec un compte local"
     }
   },
@@ -97,8 +102,8 @@
       "success": "Le compte a été vérifié, veuillez vous connecter"
     },
     "sso": {
-      "failed": "Échec de la connexion SfTian",
-      "try_again": "Veuillez réessayer la connexion SfTian"
+      "failed": "Échec de la connexion Sf SSO",
+      "try_again": "Veuillez réessayer la connexion Sf SSO"
     }
   },
   "password": {

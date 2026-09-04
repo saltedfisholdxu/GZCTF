@@ -13,7 +13,7 @@
     "save_profile": "個人情報を保存",
     "update_email": "メールを変更",
     "verify_account": "アカウントを認証",
-    "sso_login": "SfTian アカウントでログイン"
+    "sso_login": "Sf SSO でログイン"
   },
   "content": {
     "confirm": {
@@ -37,6 +37,11 @@
     },
     "welcome": "{{decodeEmail}}, こんにちは👋",
     "sso": {
+      "existing_account": {
+        "description": "今までのアカウントとパスワードをそのまま使用できます。再登録は不要で、チーム、提出履歴、スコアは変わりません。",
+        "title": "登録済みのアカウントはそのままログインできます"
+      },
+      "identity_platform": "ログイン、登録、アカウント管理は Sf SSO 統合アイデンティティプラットフォームで行われます。",
       "local_login": "またはローカルアカウントでログイン"
     }
   },
@@ -97,8 +102,8 @@
       "success": "アカウント認証済みです。ログインしてください"
     },
     "sso": {
-      "failed": "SfTian ログインに失敗しました",
-      "try_again": "SfTian ログインをもう一度お試しください"
+      "failed": "Sf SSO ログインに失敗しました",
+      "try_again": "Sf SSO ログインをもう一度お試しください"
     }
   },
   "password": {

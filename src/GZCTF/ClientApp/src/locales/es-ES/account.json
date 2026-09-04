@@ -13,7 +13,7 @@
     "save_profile": "Guardar perfil",
     "update_email": "Cambiar correo electrónico",
     "verify_account": "Verificar cuenta",
-    "sso_login": "Iniciar sesión con SfTian"
+    "sso_login": "Iniciar sesión con Sf SSO"
   },
   "content": {
     "confirm": {
@@ -37,6 +37,11 @@
     },
     "welcome": "Hola, {{decodeEmail}}👋",
     "sso": {
+      "existing_account": {
+        "description": "Usa tu cuenta y contraseña actuales. No necesitas registrarte de nuevo; tu equipo, envíos y puntuaciones no cambiarán.",
+        "title": "Las cuentas ya registradas pueden iniciar sesión directamente"
+      },
+      "identity_platform": "El inicio de sesión, el registro y la gestión de la cuenta se realizan en la plataforma de identidad Sf SSO.",
       "local_login": "O iniciar sesión con una cuenta local"
     }
   },
@@ -97,8 +102,8 @@
       "success": "La cuenta ha sido verificada, por favor inicie sesión"
     },
     "sso": {
-      "failed": "Error al iniciar sesión con SfTian",
-      "try_again": "Vuelve a intentar iniciar sesión con SfTian"
+      "failed": "Error al iniciar sesión con Sf SSO",
+      "try_again": "Vuelve a intentar iniciar sesión con Sf SSO"
     }
   },
   "password": {

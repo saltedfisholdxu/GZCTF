@@ -27,14 +27,14 @@ const fetchConfig = async (url: string): Promise<SsoClientConfig> => {
 }
 
 export const useSso = () => {
-  const { data, error, mutate } = useSWR<SsoClientConfig>('/api/sso/config', fetchConfig, {
+  const { data, error, isLoading, mutate } = useSWR<SsoClientConfig>('/api/sso/config', fetchConfig, {
     refreshInterval: 0,
     revalidateOnFocus: false,
     revalidateOnReconnect: false,
     shouldRetryOnError: false,
   })
 
-  return { config: data ?? fallbackConfig, error, mutate }
+  return { config: data ?? fallbackConfig, error, isLoading, mutate }
 }
 
 export const startSsoLogin = (returnUrl: string) => {
