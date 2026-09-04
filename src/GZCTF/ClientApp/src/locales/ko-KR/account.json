@@ -37,6 +37,7 @@
     },
     "welcome": "안녕, {{decodeEmail}}👋",
     "sso": {
+      "local_display_name_hint": "이 사이트의 표시 이름만 변경하며 Sf SSO 로그인 계정은 변경하지 않습니다.",
       "existing_account": {
         "description": "기존 계정과 비밀번호를 그대로 사용하세요. 다시 가입할 필요가 없으며 팀, 제출 기록, 성적은 그대로 유지됩니다.",
         "title": "기존 가입 계정으로 바로 로그인할 수 있습니다"
@@ -46,6 +47,7 @@
     }
   },
   "label": {
+    "local_display_name": "이 사이트의 표시 이름",
     "bio": "설명",
     "captcha": "CAPTCHA",
     "email": "이메일",

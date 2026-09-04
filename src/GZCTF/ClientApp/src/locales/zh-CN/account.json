@@ -37,6 +37,7 @@
     },
     "welcome": "{{decodeEmail}}, 你好👋",
     "sso": {
+      "local_display_name_hint": "仅影响本站显示，不改变 Sf SSO 登录账号。",
       "existing_account": {
         "description": "使用原账号和密码，无需重新注册；队伍、提交和成绩保持不变。",
         "title": "原来已注册的账号可直接登录"
@@ -46,6 +47,7 @@
     }
   },
   "label": {
+    "local_display_name": "本站显示名称",
     "bio": "描述",
     "captcha": "验证码",
     "email": "邮箱",

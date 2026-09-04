@@ -37,6 +37,7 @@
     },
     "welcome": "Halo, {{decodeEmail}}👋",
     "sso": {
+      "local_display_name_hint": "Hanya mengubah nama di situs ini, bukan akun masuk Sf SSO kamu.",
       "existing_account": {
         "description": "Gunakan akun dan kata sandi lama kamu. Tidak perlu mendaftar lagi; tim, kiriman, dan skor tetap sama.",
         "title": "Akun yang sudah terdaftar dapat langsung masuk"
@@ -46,6 +47,7 @@
     }
   },
   "label": {
+    "local_display_name": "Nama tampilan di situs ini",
     "bio": "Deskripsi",
     "captcha": "Captcha",
     "email": "Email",

@@ -32,4 +32,8 @@ back-channel endpoint 使用 OIDC discovery signing keys 验证 logout token，�
 
 Keycloak client 只启用 confidential Authorization Code flow 与 PKCE S256。`sf_identity_source_id -> gzctf_uid` mapper 只属于 gzctf client，来源属性仅管理员可编辑。用户迁移继续由既有 Rust migrator 执行，GZCTF 代码不包含迁移或 Admin API 能力。
 
-`sftian` realm 新增可选的 `display_name` 用户属性，用户和管理员均可查看、编辑，保留大小写；推荐长度为 3–15，与 GZCTF 初始用户名限制一致。`gzctf` client 专属 User Attribute mapper 将其输出为同名字符串 claim（ID Token、Access Token、UserInfo）。登录标识仍是 Keycloak 规范化的 `username`，账号绑定仍只认 `sub`；后续修改显示名称不会同步覆盖 GZCTF 已有用户名。
+`sftian` realm 的 `display_name` 用户属性允许用户和管理员查看、编辑，对用户必填、对管理员非必填，保留大小写，长度为 3–15。`firstName`、`lastName` 保留字段和历史值，仅管理员可查看、编辑；用户注册和资料页不再渲染姓名输入框。`gzctf` client 专属 User Attribute mapper 将显示名称输出为同名字符串 claim（ID Token、Access Token、UserInfo）。登录标识仍是 Keycloak 规范化的 `username`，账号绑定仍只认 `sub`；后续修改显示名称不会同步覆盖 GZCTF 已有用户名。
+
+GZCTF 个人资料页复用独立 `useSso` 的开关，只对该输入框切换“本站显示名称”标签与字段说明；不全局替换用户名翻译键。说明使用 Mantine 输入组件的关联 description，置于输入框下方，关闭 SSO 时不显示。底层 `userName` 表单值和保存请求完全不变。
+
+启用显示名称必填前，按用户授权通过 Keycloak Admin API 回填空属性。迁移账号按原 source GUID 读取 GZCTF 用户名以保留大小写、不带迁移消歧后缀；原名不满足长度校验时使用该账号当前合法 SSO 用户名。仅补空值、不覆盖自定义显示名称，保存修改前记录并逐项读回，不直接写 Keycloak 数据库，不改密码、身份来源或本地业务数据。

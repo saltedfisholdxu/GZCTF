@@ -37,6 +37,7 @@
     },
     "welcome": "{{decodeEmail}}, こんにちは👋",
     "sso": {
+      "local_display_name_hint": "このサイトでの表示名のみを変更します。Sf SSO のログインアカウントは変わりません。",
       "existing_account": {
         "description": "今までのアカウントとパスワードをそのまま使用できます。再登録は不要で、チーム、提出履歴、スコアは変わりません。",
         "title": "登録済みのアカウントはそのままログインできます"
@@ -46,6 +47,7 @@
     }
   },
   "label": {
+    "local_display_name": "このサイトでの表示名",
     "bio": "一言",
     "captcha": "キャプチャ",
     "email": "メール",

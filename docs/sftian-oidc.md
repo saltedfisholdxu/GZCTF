@@ -22,18 +22,21 @@ Realm：`sftian`；Client ID：`gzctf`；客户端类型：Confidential。
 
 不得把 `realm-management`、realm 管理员或 master realm 角色映射为 GZCTF `Admin`。站内权限只认本地 `AspNetUsers.Role`。
 
-### 可选显示名称
+### 显示名称与注册资料
 
 Keycloak 本地登录用户名会统一为小写。需要保留展示名称大小写时，在 `sftian → Realm settings → User profile` 新增独立属性：
 
-- Name：`display_name`；Display name：`显示名称 / Display name`。
-- Required：关闭；Multivalued：关闭；用户和管理员均可查看、编辑。
+- Name：`display_name`；Display name 使用 `${profile.attributes.display_name}`，中英文翻译分别为“显示名称”和“Display name”。
+- Required：开启，Required for 为 `Only users`，Required when 为 `Always`；Multivalued：关闭；用户和管理员均可查看、编辑。
 - `length` validator：min `3`、max `15`；不要对该属性做小写转换。
-- 不批量修改老用户，不改变 `username`、邮箱验证状态、迁移来源属性或本地角色。
+- `firstName`、`lastName` 的查看和编辑权限仅保留 `admin`，取消必填。用户端不展示名／姓输入框，后台字段和已有姓名数据保留。
+- 启用必填前，备份并通过 Admin API 仅回填老用户的空显示名称；不改变 `username`、邮箱验证状态、迁移来源属性或本地角色。已填写的显示名称不得覆盖。
 
 在 `Clients → gzctf → Client scopes → gzctf-dedicated → Mappers` 新建 User Attribute mapper：User Attribute 和 Token Claim Name 均为 `display_name`，Claim JSON Type 为 `String`，开启 ID Token、Access Token、UserInfo。
 
 该字段在 Keycloak 中只是可编辑的展示资料，不要求唯一，也不用于登录或账号链接。GZCTF 仅在首次创建全新本地用户时按 `display_name → preferred_username → 邮箱前缀` 初始化本地用户名，保留大小写并沿用长度限制；重名时追加稳定后缀，绝不绑定到同名账号。已有本地档案保持原用户名，后续修改 Keycloak 显示名称也不会自动改名。缺少此字段或 mapper 时仍保持原流程，无新增环境变量或数据库迁移。
+
+2026-09-04 已完成上述配置及 4,655 个空显示名称回填：4,654 个使用原 source GUID 对应的 GZCTF 用户名，保留大小写并避免迁移后缀；1 个原名不满足去空白后最短长度的历史账号使用其当前合法 SSO 用户名。逐项校验无差异，剩余空值为 0。真实注册页已核对显示“显示名称 *”，不含名／姓输入框；该核验未提交注册或发送邮件。
 
 ## GZCTF 运行配置
 
