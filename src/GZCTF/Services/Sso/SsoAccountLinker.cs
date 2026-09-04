@@ -74,7 +74,11 @@ public sealed class SsoAccountLinker(
         if (emailMatches.Count == 1)
             return await BindAsync(emailMatches[0], sub, "email", false);
 
-        var preferredUserName = principal.FindFirstValue("preferred_username");
+        // 展示名称只决定新用户的初始本地名称，不能参与前面的身份匹配或覆盖老用户资料。
+        var displayName = principal.FindFirstValue(SsoConstants.DisplayNameClaim);
+        var preferredUserName = string.IsNullOrWhiteSpace(displayName)
+            ? principal.FindFirstValue("preferred_username")
+            : displayName;
         var userName = await CreateUniqueUserNameAsync(preferredUserName, email, sub);
         user = new UserInfo
         {

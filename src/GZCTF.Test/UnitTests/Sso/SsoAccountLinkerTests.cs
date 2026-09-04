@@ -27,10 +27,12 @@ public class SsoAccountLinkerTests
 
         using var scope = services.CreateScope();
         var result = await scope.ServiceProvider.GetRequiredService<SsoAccountLinker>()
-            .LinkAsync(Principal("subject-1"), new DefaultHttpContext(), CancellationToken.None);
+            .LinkAsync(Principal("subject-1", displayName: "NewName"), new DefaultHttpContext(),
+                CancellationToken.None);
 
         Assert.True(result.Succeeded);
         Assert.Equal(user.Id, result.User!.Id);
+        Assert.Equal("legacy", result.User.UserName);
         Assert.False(result.Created);
     }
 
@@ -43,7 +45,7 @@ public class SsoAccountLinkerTests
 
         using var scope = services.CreateScope();
         var result = await scope.ServiceProvider.GetRequiredService<SsoAccountLinker>()
-            .LinkAsync(Principal("subject-2", "new@example.com", migrated.Id),
+            .LinkAsync(Principal("subject-2", "new@example.com", migrated.Id, displayName: "NewName"),
                 new DefaultHttpContext(), CancellationToken.None);
 
         Assert.True(result.Succeeded);
@@ -64,7 +66,7 @@ public class SsoAccountLinkerTests
         using (var scope = services.CreateScope())
         {
             first = await scope.ServiceProvider.GetRequiredService<SsoAccountLinker>()
-                .LinkAsync(Principal("subject-3", " MATCH@example.com "),
+                .LinkAsync(Principal("subject-3", " MATCH@example.com ", displayName: "NewName"),
                     new DefaultHttpContext(), CancellationToken.None);
         }
 
@@ -78,6 +80,7 @@ public class SsoAccountLinkerTests
         Assert.True(first.Succeeded);
         Assert.True(second.Succeeded);
         Assert.Equal(existing.Id, first.User!.Id);
+        Assert.Equal("email-match", first.User.UserName);
         Assert.Equal(existing.Id, second.User!.Id);
 
         using var verifyScope = services.CreateScope();
@@ -170,6 +173,76 @@ public class SsoAccountLinkerTests
     }
 
     [Fact]
+    public async Task NewUser_UsesDisplayNameWithoutLosingCaseAndKeepsItOnRepeatLogin()
+    {
+        await using var services = CreateServices();
+        SsoLinkResult first;
+        using (var scope = services.CreateScope())
+        {
+            first = await scope.ServiceProvider.GetRequiredService<SsoAccountLinker>()
+                .LinkAsync(Principal("subject-display", "display@example.com",
+                        preferredUserName: "sftian-test", displayName: " SfTian-test "),
+                    new DefaultHttpContext(), CancellationToken.None);
+        }
+
+        Assert.True(first.Succeeded);
+        Assert.True(first.Created);
+        Assert.Equal("SfTian-test", first.User!.UserName);
+        Assert.Equal("SFTIAN-TEST", first.User.NormalizedUserName);
+        Assert.Equal(Role.User, first.User.Role);
+        Assert.True(first.User.EmailConfirmed);
+
+        using var repeatScope = services.CreateScope();
+        var repeat = await repeatScope.ServiceProvider.GetRequiredService<SsoAccountLinker>()
+            .LinkAsync(Principal("subject-display", displayName: "ChangedName"),
+                new DefaultHttpContext(), CancellationToken.None);
+
+        Assert.True(repeat.Succeeded);
+        Assert.False(repeat.Created);
+        Assert.Equal(first.User.Id, repeat.User!.Id);
+        Assert.Equal("SfTian-test", repeat.User.UserName);
+        Assert.Equal(1, await repeatScope.ServiceProvider.GetRequiredService<AppDbContext>().Users.CountAsync());
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public async Task EmptyDisplayName_FallsBackToPreferredUserName(string? displayName)
+    {
+        await using var services = CreateServices();
+        using var scope = services.CreateScope();
+        var result = await scope.ServiceProvider.GetRequiredService<SsoAccountLinker>()
+            .LinkAsync(Principal("subject-fallback", "fallback@example.com",
+                    preferredUserName: "preferred-name", displayName: displayName),
+                new DefaultHttpContext(), CancellationToken.None);
+
+        Assert.True(result.Succeeded);
+        Assert.True(result.Created);
+        Assert.Equal("preferred-name", result.User!.UserName);
+    }
+
+    [Fact]
+    public async Task DuplicateDisplayName_CreatesDistinctUserWithStableSuffixInsteadOfLinkingByName()
+    {
+        await using var services = CreateServices();
+        var existing = await CreateUserAsync(services, "SFTIAN-TEST", "owner@example.com", Role.Admin);
+        using var scope = services.CreateScope();
+        var result = await scope.ServiceProvider.GetRequiredService<SsoAccountLinker>()
+            .LinkAsync(Principal("subject-duplicate-name", "other@example.com", displayName: "SfTian-test"),
+                new DefaultHttpContext(), CancellationToken.None);
+
+        Assert.True(result.Succeeded);
+        Assert.True(result.Created);
+        Assert.NotEqual(existing.Id, result.User!.Id);
+        var suffix = SsoConstants.StableSuffix("subject-duplicate-name:0");
+        Assert.Equal($"SfTian-{suffix}", result.User.UserName);
+        Assert.InRange(result.User.UserName!.Length, Limits.MinUserNameLength, Limits.MaxUserNameLength);
+        Assert.Equal(Role.User, result.User.Role);
+        Assert.Equal(2, await scope.ServiceProvider.GetRequiredService<AppDbContext>().Users.CountAsync());
+    }
+
+    [Fact]
     public async Task FirstLogin_RequiresVerifiedEmail()
     {
         await using var services = CreateServices();
@@ -250,7 +323,7 @@ public class SsoAccountLinkerTests
     }
 
     private static ClaimsPrincipal Principal(string sub, string? email = null, Guid? migratedId = null,
-        string? preferredUserName = null, bool emailVerified = true)
+        string? preferredUserName = null, bool emailVerified = true, string? displayName = null)
     {
         var claims = new List<Claim> { new("sub", sub) };
         if (email is not null)
@@ -263,6 +336,8 @@ public class SsoAccountLinkerTests
             claims.Add(new("gzctf_uid", migratedId.Value.ToString()));
         if (preferredUserName is not null)
             claims.Add(new("preferred_username", preferredUserName));
+        if (displayName is not null)
+            claims.Add(new(SsoConstants.DisplayNameClaim, displayName));
 
         return new ClaimsPrincipal(new ClaimsIdentity(claims, SsoConstants.Scheme));
     }

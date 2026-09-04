@@ -7,6 +7,7 @@ internal static class SsoConstants
 {
     public const string Scheme = "keycloak";
     public const string ProviderDisplayName = "Sf SSO";
+    public const string DisplayNameClaim = "display_name";
     public const string ExternalLoginProviderItem = "LoginProvider";
     public const string CallbackPath = "/api/sso/callback";
     public const string CompletePath = "/api/sso/complete";

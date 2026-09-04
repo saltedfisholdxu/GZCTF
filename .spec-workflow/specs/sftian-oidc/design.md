@@ -13,7 +13,7 @@ ASP.NET Core OIDC Handler 先用受保护的 state 与 correlation Cookie 完成
 1. 先按 `FindByLoginAsync("keycloak", sub)` 查找已有绑定。
 2. 首次登录时尝试将 `gzctf_uid` 解析为 GUID，并通过 `UserManager.FindByIdAsync` 定位迁移用户。
 3. 未命中时只允许使用 `email_verified=true` 的邮箱；按规范化邮箱查询最多两条，只有唯一命中才允许绑定。
-4. 仍未命中时创建普通本地用户。用户名只在新建时参考 `preferred_username`，冲突时追加由 `sub` 生成的稳定短后缀。
+4. 仍未命中时创建普通本地用户。初始用户名优先取非空白的 `display_name`，其次取 `preferred_username`，再沿用邮箱前缀回退；保留大小写，沿用长度限制和基于 `sub` 的稳定冲突后缀。显示名称只用于新建，绝不参与账号匹配或覆盖已有关联账号。
 5. 找到本地用户后先拒绝 `Role.Banned`，再调用 `AddLoginAsync`。并发冲突时重新按外部登录查找，不猜测绑定目标。
 
 ## 登出与撤销
@@ -31,3 +31,5 @@ back-channel endpoint 使用 OIDC discovery signing keys 验证 logout token，�
 ## 运维边界
 
 Keycloak client 只启用 confidential Authorization Code flow 与 PKCE S256。`sf_identity_source_id -> gzctf_uid` mapper 只属于 gzctf client，来源属性仅管理员可编辑。用户迁移继续由既有 Rust migrator 执行，GZCTF 代码不包含迁移或 Admin API 能力。
+
+`sftian` realm 新增可选的 `display_name` 用户属性，用户和管理员均可查看、编辑，保留大小写；推荐长度为 3–15，与 GZCTF 初始用户名限制一致。`gzctf` client 专属 User Attribute mapper 将其输出为同名字符串 claim（ID Token、Access Token、UserInfo）。登录标识仍是 Keycloak 规范化的 `username`，账号绑定仍只认 `sub`；后续修改显示名称不会同步覆盖 GZCTF 已有用户名。
